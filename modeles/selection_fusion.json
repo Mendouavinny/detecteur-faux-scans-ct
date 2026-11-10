@@ -1,0 +1,32 @@
+{
+ "selection": {
+  "HGB sur 56 descripteurs (version initiale)": {
+   "attaque_exclue": 0.7534955880645536,
+   "plis_patients": 0.7929618690301856
+  },
+  "poids positifs : forensique + CNN": {
+   "attaque_exclue": 0.8235678625333797,
+   "plis_patients": 0.8318233237703945
+  },
+  "poids positifs : forensique + CNN + diffusion": {
+   "attaque_exclue": 0.8194937884593056,
+   "plis_patients": 0.8310517188321228
+  },
+  "poids positifs : forensique + CNN + diffusion + fusion locale": {
+   "attaque_exclue": 0.8260832462556601,
+   "plis_patients": 0.8361173220275928
+  },
+  "(référence) forensique seule": {
+   "attaque_exclue": 0.8413945489376523,
+   "plis_patients": 0.84153845337568
+  }
+ },
+ "choix": "poids positifs : forensique + CNN + diffusion + fusion locale",
+ "poids": [
+  0.5116169492125037,
+  0.30851397570014566,
+  0.0,
+  0.9325210791235787,
+  -0.07916109422190136
+ ]
+}
