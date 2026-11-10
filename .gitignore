@@ -4,5 +4,5 @@ __pycache__/
 journal/
 .gradio/
 
-# poids des réseaux (17 Mo chacun) : publiés sur le Space Hugging Face
+# poids des reseaux (17 Mo chacun) : publies sur le Space Hugging Face
 modeles/*.pt
