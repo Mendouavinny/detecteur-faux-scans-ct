@@ -223,6 +223,14 @@ def fr(v, n=2):
     return f"{v:.{n}f}".replace(".", ",")
 
 
+EN_LIGNE = bool(os.environ.get("SPACE_ID"))     # version hébergée sur Hugging Face Spaces
+CONFIDENTIALITE = (
+    "- **Version en ligne de démonstration.** Les coupes déposées sont traitées sur un serveur Hugging Face et le "
+    "journal d’audit est commun à tous les visiteurs : n’y déposez **aucune donnée de patient réel**. Les exemples "
+    "fournis proviennent de la base publique LIDC-IDRI." if EN_LIGNE else
+    "- Tout s’exécute sur ce poste : l’application n’écoute que l’adresse locale 127.0.0.1 et n’envoie aucune image.")
+
+
 def a_propos():
     t = """
 ### Ce que fait l’application
@@ -263,7 +271,7 @@ exécution du carnet, celle qui corrige l’artefact d’écrêtage (aucun réen
   celui du HGB que de 0,03 en moyenne.
 - Fidélité vérifiée : sur les 76 coupes authentiques du test interne, l’application reproduit les scores du carnet
   (écart moyen 0,0002).
-- Tout s’exécute sur ce poste : l’application n’écoute que l’adresse locale 127.0.0.1 et n’envoie aucune image.
+{CONFIDENTIALITE}
 
 *Mémoire de Master Recherche SDIA (ENSPD) — MENDOUA Vinny Jordan.*
 """
@@ -273,7 +281,9 @@ exécution du carnet, celle qui corrige l’artefact d’écrêtage (aucun réen
 with gr.Blocks(title="Détection de faux scans CT") as app:
     gr.HTML("<div id='entete'><h1>Détection automatique de faux scans CT</h1>"
             "<p>Approche hybride forensique + apprentissage profond — démonstrateur du mémoire de Master "
-            "Recherche SDIA (ENSPD), MENDOUA Vinny Jordan</p></div>")
+            "Recherche SDIA (ENSPD), MENDOUA Vinny Jordan</p>"
+            + ("<p><b>Version en ligne de démonstration : ne déposez aucune donnée de patient réel.</b></p>"
+               if EN_LIGNE else "") + "</div>")
     with gr.Accordion("Réglages de la politique d’alerte", open=False):
         with gr.Row():
             tau1 = gr.Slider(0.05, 0.99, TAU1_DEF, step=0.01, label="τ1 : au-dessus → « à vérifier »")
@@ -338,6 +348,8 @@ with gr.Blocks(title="Détection de faux scans CT") as app:
         gr.Markdown(a_propos())
 
 if __name__ == "__main__":
-    app.queue(default_concurrency_limit=1).launch(server_name="127.0.0.1", server_port=int(os.environ.get("PORT", 7860)),
+    # en local : 127.0.0.1 seulement ; sur Hugging Face Spaces, GRADIO_SERVER_NAME vaut 0.0.0.0
+    app.queue(default_concurrency_limit=1).launch(server_name=os.environ.get("GRADIO_SERVER_NAME", "127.0.0.1"),
+                                                  server_port=int(os.environ.get("PORT", 7860)),
                                                   css=CSS, theme=gr.themes.Soft(primary_hue="blue"),
                                                   inbrowser=os.environ.get("OUVRIR", "0") == "1", show_error=True)

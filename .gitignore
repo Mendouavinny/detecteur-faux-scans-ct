@@ -3,3 +3,6 @@ __pycache__/
 .venv/
 journal/
 .gradio/
+
+# poids des réseaux (17 Mo chacun) : publiés sur le Space Hugging Face
+modeles/*.pt

@@ -19,7 +19,14 @@ Elle applique à une coupe CT au format DICOM le détecteur du mémoire. Les mod
 3. **Journal d'audit.** Liste les analyses et vérifie l'intégrité du journal chaîné.
 4. **À propos et limites.**
 
+## Version en ligne
+
+- Application : https://huggingface.co/spaces/MENDOUA/detecteur-faux-scans-ct (page d'accueil Vercel : dossier `site/`)
+- C'est une démonstration : n'y déposez aucune donnée de patient réel.
+
 ## Installation
+
+Les trois réseaux (`cnn_best.pt`, `ddpm_attaquant.pt`, `gan_G.pt`, 17 Mo chacun) ne sont pas dans ce dépôt. Il faut les télécharger depuis le dossier [`modeles/` du Space](https://huggingface.co/spaces/MENDOUA/detecteur-faux-scans-ct/tree/main/modeles) et les placer dans `modeles/`.
 
 Il faut Python 3.11 ou plus récent. Le calcul se fait sur processeur, environ 3 s par coupe ; aucune carte graphique n'est nécessaire.
 
