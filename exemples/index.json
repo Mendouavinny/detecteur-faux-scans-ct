@@ -1,0 +1,90 @@
+[
+ {
+  "fichier": "LIDC-IDRI-0085_coupe086.dcm",
+  "patient": "LIDC-IDRI-0085",
+  "coupe": 86,
+  "nodules": [],
+  "score_authentique": 0.047
+ },
+ {
+  "fichier": "LIDC-IDRI-0117_coupe057.dcm",
+  "patient": "LIDC-IDRI-0117",
+  "coupe": 57,
+  "nodules": [],
+  "score_authentique": 0.814
+ },
+ {
+  "fichier": "LIDC-IDRI-0126_coupe097.dcm",
+  "patient": "LIDC-IDRI-0126",
+  "coupe": 97,
+  "nodules": [
+   [
+    212,
+    361,
+    4.153040254070076
+   ]
+  ],
+  "score_authentique": 0.879
+ },
+ {
+  "fichier": "LIDC-IDRI-0126_coupe044.dcm",
+  "patient": "LIDC-IDRI-0126",
+  "coupe": 44,
+  "nodules": [],
+  "score_authentique": 0.873
+ },
+ {
+  "fichier": "LIDC-IDRI-0139_coupe031.dcm",
+  "patient": "LIDC-IDRI-0139",
+  "coupe": 31,
+  "nodules": [
+   [
+    311,
+    109,
+    26.92839805577584
+   ]
+  ],
+  "score_authentique": 0.038
+ },
+ {
+  "fichier": "LIDC-IDRI-0167_coupe053.dcm",
+  "patient": "LIDC-IDRI-0167",
+  "coupe": 53,
+  "nodules": [],
+  "score_authentique": 0.04
+ },
+ {
+  "fichier": "LIDC-IDRI-0184_coupe072.dcm",
+  "patient": "LIDC-IDRI-0184",
+  "coupe": 72,
+  "nodules": [],
+  "score_authentique": 0.375
+ },
+ {
+  "fichier": "LIDC-IDRI-0340_coupe060.dcm",
+  "patient": "LIDC-IDRI-0340",
+  "coupe": 60,
+  "nodules": [
+   [
+    332,
+    395,
+    18.506125748641217
+   ]
+  ],
+  "score_authentique": 0.533
+ },
+ {
+  "fichier": "LIDC-IDRI-0340_coupe035.dcm",
+  "patient": "LIDC-IDRI-0340",
+  "coupe": 35,
+  "nodules": [],
+  "score_authentique": 0.551
+ },
+ {
+  "fichier": "LIDC-IDRI-0345_coupe136.dcm",
+  "patient": "LIDC-IDRI-0345",
+  "coupe": 136,
+  "nodules": [],
+  "score_authentique": 0.782
+ }
+]
