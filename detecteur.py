@@ -162,6 +162,17 @@ def pixel_map(coords, vals, shape=(512, 512)):
     return np.where(cnt > 0, acc / np.maximum(cnt, 1), 0)
 
 
+def liberer():
+    """Ramasse-miettes, puis rend au système la mémoire libre du tas (glibc, Linux) : utile sous 512 Mo."""
+    import gc
+    gc.collect()
+    try:
+        import ctypes
+        ctypes.CDLL("libc.so.6").malloc_trim(0)
+    except (OSError, AttributeError):
+        pass
+
+
 def memoire(etape):
     """Avec DETECTEUR_JOURNAL_MEMOIRE=1, écrit la mémoire du processus (actuelle et pic) dans le journal (Linux)."""
     if os.environ.get("DETECTEUR_JOURNAL_MEMOIRE") != "1":
@@ -169,8 +180,13 @@ def memoire(etape):
     try:
         st = dict(l.split(":", 1) for l in open("/proc/self/status") if l.startswith(("VmRSS", "VmHWM")))
         print(f"[mémoire] {etape} : {st['VmRSS'].strip()} (pic {st['VmHWM'].strip()})", flush=True)
-    except OSError:
-        pass
+    except OSError:                            # Windows : psutil, s'il est installé
+        try:
+            import psutil
+            mi = psutil.Process().memory_info()
+            print(f"[mémoire] {etape} : {mi.rss // 1024} kB (pic {getattr(mi, 'peak_wset', 0) // 1024} kB)", flush=True)
+        except ImportError:
+            pass
 
 
 # ------------------------------------------------------------------ chargement des modèles
@@ -225,7 +241,7 @@ class Detecteur:
         autre = "ddpm" if nom == "cnn" else "cnn"
         if getattr(self, autre) is not None:
             setattr(self, autre, None)
-            import gc; gc.collect()
+            liberer()
         if getattr(self, nom) is None:
             setattr(self, nom, self._ort(f"{nom}.onnx"))
         return getattr(self, nom)
@@ -297,6 +313,7 @@ class Detecteur:
         memoire("début de l'analyse")
         lung = lung_mask_slice(img)
         bo = self.branch_outputs(img, lung)
+        liberer()
         memoire("branches calculées")
         if bo is None:
             return dict(ok=False, lung=lung, message="Aucun patch pulmonaire exploitable dans cette coupe "
@@ -328,7 +345,7 @@ class Detecteur:
             else:
                 if getattr(self, "econome", False):
                     self.cnn = self.ddpm = None
-                    import gc; gc.collect()
+                    liberer()
                 self._gan = self._ort("gan.onnx")
         if self.moteur == "torch":
             with torch.no_grad():

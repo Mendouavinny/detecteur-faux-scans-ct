@@ -1,4 +1,4 @@
-services:
+﻿services:
   - type: web
     name: detecteur-faux-scans-ct
     runtime: python
@@ -22,7 +22,7 @@ services:
       - key: DETECTEUR_THREADS
         value: "1"
       - key: DETECTEUR_LOT
-        value: "16"
+        value: "4"
       - key: DETECTEUR_ECONOME
         value: "1"
       - key: DETECTEUR_JOURNAL_MEMOIRE
