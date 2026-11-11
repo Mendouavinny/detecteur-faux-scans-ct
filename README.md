@@ -1,4 +1,4 @@
-# Détection automatique de faux scans CT — application de démonstration
+﻿# Détection automatique de faux scans CT — application de démonstration
 
 Application web locale (Gradio) du mémoire de Master Recherche SDIA (ENSPD) de **MENDOUA Vinny Jordan** :
 *Détection automatique de faux scans CT : approche hybride forensique et apprentissage profond.*
@@ -21,7 +21,7 @@ Elle applique à une coupe CT au format DICOM le détecteur du mémoire. Les mod
 
 ## Version en ligne
 
-- La page d'accueil est hébergée par Vercel (dossier `site/`). Elle affiche l'application, qui tourne sur Render (`render.yaml`, offre gratuite).
+- La page d'accueil est hébergée par Vercel (dossier `site/`). Elle affiche l'application, qui tourne sur Render (`render.yaml`, offre gratuite) : https://detecteur-faux-scans-ct.onrender.com
 - **C'est une démonstration : n'y déposez aucune donnée de patient réel.**
 - Sur l'offre gratuite, le serveur se met en veille après 15 minutes d'inactivité. Le premier accès prend alors environ une minute. Le processeur est partagé, et l'analyse d'une coupe dure de l'ordre d'une minute.
 
