@@ -57,29 +57,53 @@ def block_feats(img, R, blocks):
     return np.array(rows, np.float32)
 
 
+_DUP_CACHE = {}
+
+
 def duplicate_map(img, body, b=8):
-    """Détection de blocs strictement identiques (copier-déplacer) par hachage."""
+    """Détection de blocs strictement identiques (copier-déplacer) par hachage.
+
+    Même résultat que la version du carnet, avec une mémoire réduite pour l'hébergement (512 Mo) : les fenêtres
+    sont lues par tranches, réduites à une empreinte de 64 bits, et seules les empreintes répétées sont
+    comparées octet par octet (une collision d'empreintes ne peut donc pas créer de fausse duplication).
+    Le résultat est mis en cache pour la dernière coupe (la carte sert deux fois par analyse)."""
     from numpy.lib.stride_tricks import sliding_window_view
+    cle = (hash(img.tobytes()), hash(body.tobytes()), b)
+    if cle in _DUP_CACHE:
+        return _DUP_CACHE[cle].copy()
     dup = np.zeros(img.shape, bool)
     W = sliding_window_view(np.ascontiguousarray(img), (b, b))
     H, Wd = W.shape[:2]
-    flat = np.ascontiguousarray(W.reshape(H * Wd, b * b))
-    yy, xx = np.divmod(np.arange(H * Wd), Wd)
-    # écart-type ligne par ligne, calculé par tranches (même résultat que flat.std(1), pic mémoire ~10 fois moindre)
-    sd = np.concatenate([flat[i:i + 16384].std(1) for i in range(0, len(flat), 16384)])
-    ok = body[yy + b // 2, xx + b // 2] & (sd >= 3)
+    n = H * Wd
+    yy, xx = np.divmod(np.arange(n), Wd)
+    coef = np.random.default_rng(12345).integers(1, 2 ** 63, b * b, dtype=np.uint64) | np.uint64(1)
+    ok = np.zeros(n, bool)
+    hsh = np.zeros(n, np.uint64)
+    pas = max(1, 4096 // Wd)                          # tranches de lignes de fenêtres
+    for y0 in range(0, H, pas):
+        blk = W[y0:y0 + pas].reshape(-1, b * b)       # copie de la tranche seulement
+        s = slice(y0 * Wd, y0 * Wd + len(blk))
+        ok[s] = blk.std(1) >= 3
+        hsh[s] = (blk.astype(np.int64).view(np.uint64) * coef).sum(1)   # arithmétique modulo 2^64
+    ok &= body[yy + b // 2, xx + b // 2]
     idx = np.where(ok)[0]
     if len(idx) == 0:
-        return dup
-    v = flat[idx].view(np.dtype((np.void, flat.dtype.itemsize * b * b))).ravel()
-    _, inv, cnt = np.unique(v, return_inverse=True, return_counts=True)
-    for g in np.where(cnt > 1)[0]:
-        mem = idx[inv == g]
-        ys, xs = yy[mem], xx[mem]
-        if (np.abs(ys - ys[0]).max() > b) or (np.abs(xs - xs[0]).max() > b):
-            for y, x in zip(ys, xs):
-                dup[y:y + b, x:x + b] = True
-    return dup
+        _DUP_CACHE.clear(); _DUP_CACHE[cle] = dup
+        return dup.copy()
+    _, inv_h, cnt_h = np.unique(hsh[idx], return_inverse=True, return_counts=True)
+    cand = idx[cnt_h[inv_h] > 1]                       # fenêtres dont l'empreinte se répète
+    if len(cand):
+        rows = np.stack([W[i // Wd, i % Wd].ravel() for i in cand])
+        v = rows.view(np.dtype((np.void, rows.dtype.itemsize * b * b))).ravel()
+        _, inv, cnt = np.unique(v, return_inverse=True, return_counts=True)   # égalité exacte, comme le carnet
+        for g in np.where(cnt > 1)[0]:
+            mem = cand[inv == g]
+            ys, xs = yy[mem], xx[mem]
+            if (np.abs(ys - ys[0]).max() > b) or (np.abs(xs - xs[0]).max() > b):
+                for y, x in zip(ys, xs):
+                    dup[y:y + b, x:x + b] = True
+    _DUP_CACHE.clear(); _DUP_CACHE[cle] = dup
+    return dup.copy()
 
 
 def robust_z(v):

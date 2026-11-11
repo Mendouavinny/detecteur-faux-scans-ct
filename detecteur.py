@@ -162,6 +162,17 @@ def pixel_map(coords, vals, shape=(512, 512)):
     return np.where(cnt > 0, acc / np.maximum(cnt, 1), 0)
 
 
+def memoire(etape):
+    """Avec DETECTEUR_JOURNAL_MEMOIRE=1, écrit la mémoire du processus (actuelle et pic) dans le journal (Linux)."""
+    if os.environ.get("DETECTEUR_JOURNAL_MEMOIRE") != "1":
+        return
+    try:
+        st = dict(l.split(":", 1) for l in open("/proc/self/status") if l.startswith(("VmRSS", "VmHWM")))
+        print(f"[mémoire] {etape} : {st['VmRSS'].strip()} (pic {st['VmHWM'].strip()})", flush=True)
+    except OSError:
+        pass
+
+
 # ------------------------------------------------------------------ chargement des modèles
 class Detecteur:
     def __init__(self, dossier=MODELES, device=DEVICE):
@@ -185,7 +196,11 @@ class Detecteur:
             o = ort.SessionOptions(); o.intra_op_num_threads = int(os.environ.get("DETECTEUR_THREADS", "0"))
             o.enable_cpu_mem_arena = False; o.enable_mem_pattern = False   # mémoire rendue après chaque lot
             self._ort = lambda nom: ort.InferenceSession(str(self.dossier / nom), o, providers=["CPUExecutionProvider"])
-            self.cnn, self.ddpm = self._ort("cnn.onnx"), self._ort("ddpm.onnx")
+            # mode économe (hébergement à 512 Mo) : un seul réseau en mémoire à la fois, chargé à la demande
+            self.econome = os.environ.get("DETECTEUR_ECONOME") == "1"
+            self.cnn = self.ddpm = None
+            if not self.econome:
+                self.cnn, self.ddpm = self._ort("cnn.onnx"), self._ort("ddpm.onnx")
         betas = np.linspace(1e-4, 0.02, T_DIFF, dtype=np.float32)    # = torch.linspace (float32)
         self.abar = np.cumprod(1 - betas, dtype=np.float32)
         sel = self.dossier / "selection_fusion.json"
@@ -201,14 +216,26 @@ class Detecteur:
             with torch.no_grad():
                 lo, se = self.cnn(torch.from_numpy(x).to(self.device))
             return lo.cpu().numpy(), se.cpu().numpy()
-        return tuple(self.cnn.run(None, {"x": x}))
+        return tuple(self._session("cnn").run(None, {"x": x}))
+
+    def _session(self, nom):
+        """Session ONNX du réseau demandé ; en mode économe, libère l'autre réseau avant de charger celui-ci."""
+        if not getattr(self, "econome", False):
+            return getattr(self, nom)
+        autre = "ddpm" if nom == "cnn" else "cnn"
+        if getattr(self, autre) is not None:
+            setattr(self, autre, None)
+            import gc; gc.collect()
+        if getattr(self, nom) is None:
+            setattr(self, nom, self._ort(f"{nom}.onnx"))
+        return getattr(self, nom)
 
     def _eps(self, x, t):
         """Bruit prédit par le DDPM ; x : (N, 1, 64, 64) float32, t : (N,) int64."""
         if self.moteur == "torch":
             with torch.no_grad():
                 return self.ddpm(torch.from_numpy(x).to(self.device), torch.from_numpy(t).to(self.device)).cpu().numpy()
-        return self.ddpm.run(None, {"x": x, "t": t})[0]
+        return self._session("ddpm").run(None, {"x": x, "t": t})[0]
 
     def cnn_patch(self, img, coords):
         if not coords:
@@ -244,10 +271,13 @@ class Detecteur:
         coords, f = slice_patch_features(img, lung)
         if not coords:
             return None
+        memoire("descripteurs forensiques")
         p_for = self.forensic_clf.predict_proba(f)[:, 1]
         p_cnn, seg = self.cnn_patch(img, coords)
+        memoire("branche CNN")
         X = np.stack([img[y:y + P, x:x + P] for y, x in coords])
         s = self.diffusion_score(X)
+        memoire("branche diffusion")
         s_z = (s - np.median(s)) / (1.4826 * np.median(np.abs(s - np.median(s))) + 1e-9)
         return dict(coords=coords, p_for=p_for, p_cnn=p_cnn, seg=seg, s_diff=s_z,
                     gfeat=FZ.image_features(img, lung)[0], dup=float(f[:, -1].max()))
@@ -264,8 +294,10 @@ class Detecteur:
     # ---------------------------------------------------------- analyse complète d'une coupe
     def analyser(self, img):
         img = np.asarray(img, np.int16)
+        memoire("début de l'analyse")
         lung = lung_mask_slice(img)
         bo = self.branch_outputs(img, lung)
+        memoire("branches calculées")
         if bo is None:
             return dict(ok=False, lung=lung, message="Aucun patch pulmonaire exploitable dans cette coupe "
                                                      "(poumon absent ou trop petit) : la coupe ne peut pas être analysée.")
@@ -294,11 +326,17 @@ class Detecteur:
                 self._gan.load_state_dict(torch.load(self.dossier / "gan_G.pt", map_location=self.device))
                 self._gan.eval()
             else:
+                if getattr(self, "econome", False):
+                    self.cnn = self.ddpm = None
+                    import gc; gc.collect()
                 self._gan = self._ort("gan.onnx")
         if self.moteur == "torch":
             with torch.no_grad():
                 return self._gan(torch.from_numpy(x).to(self.device)).cpu().numpy()
-        return self._gan.run(None, {"x": x})[0]
+        y = self._gan.run(None, {"x": x})[0]
+        if getattr(self, "econome", False):      # générateur libéré aussitôt (démonstration seulement)
+            self._gan = None
+        return y
 
 
 # ------------------------------------------------------------------ attaques de démonstration (§3)

@@ -6,6 +6,10 @@ services:
     buildCommand: pip install -r requirements-render.txt && python telecharger_modeles.py
     startCommand: python app.py
     healthCheckPath: /
+    buildFilter:
+      ignoredPaths:
+        - site/**
+        - README.md
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.8"
@@ -16,4 +20,10 @@ services:
       - key: EN_LIGNE
         value: "1"
       - key: DETECTEUR_THREADS
+        value: "1"
+      - key: DETECTEUR_LOT
+        value: "16"
+      - key: DETECTEUR_ECONOME
+        value: "1"
+      - key: DETECTEUR_JOURNAL_MEMOIRE
         value: "1"
