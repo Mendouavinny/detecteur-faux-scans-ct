@@ -1,0 +1,4 @@
+# Vercel ne publie que la page d'accueil (dossier site/) ; l'application tourne sur Render
+/*
+!site
+!vercel.json
