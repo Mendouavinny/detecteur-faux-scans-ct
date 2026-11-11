@@ -65,7 +65,9 @@ def duplicate_map(img, body, b=8):
     H, Wd = W.shape[:2]
     flat = np.ascontiguousarray(W.reshape(H * Wd, b * b))
     yy, xx = np.divmod(np.arange(H * Wd), Wd)
-    ok = body[yy + b // 2, xx + b // 2] & (flat.std(1) >= 3)
+    # écart-type ligne par ligne, calculé par tranches (même résultat que flat.std(1), pic mémoire ~10 fois moindre)
+    sd = np.concatenate([flat[i:i + 16384].std(1) for i in range(0, len(flat), 16384)])
+    ok = body[yy + b // 2, xx + b // 2] & (sd >= 3)
     idx = np.where(ok)[0]
     if len(idx) == 0:
         return dup

@@ -223,9 +223,9 @@ def fr(v, n=2):
     return f"{v:.{n}f}".replace(".", ",")
 
 
-EN_LIGNE = bool(os.environ.get("SPACE_ID"))     # version hébergée sur Hugging Face Spaces
+EN_LIGNE = bool(os.environ.get("EN_LIGNE") or os.environ.get("SPACE_ID"))   # version hébergée en ligne
 CONFIDENTIALITE = (
-    "- **Version en ligne de démonstration.** Les coupes déposées sont traitées sur un serveur Hugging Face et le "
+    "- **Version en ligne de démonstration.** Les coupes déposées sont traitées sur un serveur distant et le "
     "journal d’audit est commun à tous les visiteurs : n’y déposez **aucune donnée de patient réel**. Les exemples "
     "fournis proviennent de la base publique LIDC-IDRI." if EN_LIGNE else
     "- Tout s’exécute sur ce poste : l’application n’écoute que l’adresse locale 127.0.0.1 et n’envoie aucune image.")

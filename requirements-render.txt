@@ -1,0 +1,9 @@
+# hébergement léger (Render) : réseaux en ONNX, sans PyTorch
+numpy>=2.0
+scipy>=1.13
+scikit-learn==1.9.1
+joblib>=1.4
+onnxruntime>=1.20
+opencv-python-headless>=4.9
+pydicom>=3.0
+gradio==6.31.0

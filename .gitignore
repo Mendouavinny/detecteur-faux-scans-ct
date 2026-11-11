@@ -4,5 +4,6 @@ __pycache__/
 journal/
 .gradio/
 
-# poids des reseaux (17 Mo chacun) : publies sur le Space Hugging Face
+# reseaux (17 Mo chacun) : publies sur Hugging Face (MENDOUA/detecteur-faux-scans-ct-modeles)
 modeles/*.pt
+modeles/*.onnx

@@ -21,20 +21,28 @@ Elle applique à une coupe CT au format DICOM le détecteur du mémoire. Les mod
 
 ## Version en ligne
 
-- Application : https://huggingface.co/spaces/MENDOUA/detecteur-faux-scans-ct (page d'accueil Vercel : dossier `site/`)
-- C'est une démonstration : n'y déposez aucune donnée de patient réel.
+- La page d'accueil est hébergée par Vercel (dossier `site/`). Elle affiche l'application, qui tourne sur Render (`render.yaml`, offre gratuite).
+- **C'est une démonstration : n'y déposez aucune donnée de patient réel.**
+- Sur l'offre gratuite, le serveur se met en veille après 15 minutes d'inactivité. Le premier accès prend alors environ une minute. Le processeur est partagé, et l'analyse d'une coupe dure de l'ordre d'une minute.
+
+En ligne, les réseaux tournent en **ONNX Runtime**, sans PyTorch, pour tenir dans 512 Mo de mémoire. Ce sont les mêmes réseaux exportés par `export_onnx.py`. `comparer_moteurs.py` vérifie que les deux moteurs donnent les mêmes scores : l'écart maximal mesuré est de 3 × 10⁻⁷ sur les 10 coupes d'exemple.
+
+## Modèles
+
+Les réseaux pèsent 17 Mo chacun et ne sont pas dans ce dépôt. Ils sont publiés sur Hugging Face : [MENDOUA/detecteur-faux-scans-ct-modeles](https://huggingface.co/MENDOUA/detecteur-faux-scans-ct-modeles).
+
+- `python telecharger_modeles.py` télécharge dans `modeles/` les versions ONNX (`cnn.onnx`, `ddpm.onnx`, `gan.onnx`). Avec elles, PyTorch n'est pas nécessaire : `pip install -r requirements-render.txt`.
+- Avec PyTorch, on peut aussi placer dans `modeles/` les poids d'origine `cnn_best.pt`, `ddpm_attaquant.pt` et `gan_G.pt`. Le moteur se choisit avec `DETECTEUR_MOTEUR=torch` ou `DETECTEUR_MOTEUR=onnx`.
 
 ## Installation
-
-Les trois réseaux (`cnn_best.pt`, `ddpm_attaquant.pt`, `gan_G.pt`, 17 Mo chacun) ne sont pas dans ce dépôt. Il faut les télécharger depuis le dossier [`modeles/` du Space](https://huggingface.co/spaces/MENDOUA/detecteur-faux-scans-ct/tree/main/modeles) et les placer dans `modeles/`.
 
 Il faut Python 3.11 ou plus récent. Le calcul se fait sur processeur, environ 3 s par coupe ; aucune carte graphique n'est nécessaire.
 
 ```bash
 python -m venv .venv
 .venv\Scripts\activate          # Windows ; sous Linux/macOS : source .venv/bin/activate
-pip install torch --index-url https://download.pytorch.org/whl/cpu
-pip install -r requirements.txt
+pip install -r requirements-render.txt
+python telecharger_modeles.py
 python app.py
 ```
 

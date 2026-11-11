@@ -20,9 +20,10 @@ import numpy as np
 import cv2
 import joblib
 import pydicom
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+try:                                    # PyTorch facultatif : sans lui, moteur ONNX Runtime (hébergement léger)
+    import torch
+except ImportError:
+    torch = None
 from scipy import ndimage as ndi
 from scipy.optimize import minimize
 from scipy.stats import kurtosis
@@ -43,7 +44,11 @@ def _dossier_modeles():
 
 
 MODELES = _dossier_modeles()
-DEVICE = torch.device(os.environ.get("DETECTEUR_DEVICE", "cpu"))
+DEVICE = torch.device(os.environ.get("DETECTEUR_DEVICE", "cpu")) if torch is not None else "cpu"
+# moteur : DETECTEUR_MOTEUR=torch|onnx ; par défaut PyTorch s'il est installé et que les poids .pt sont présents
+LOT = int(os.environ.get("DETECTEUR_LOT", "32"))   # patchs par passage dans un réseau (mémoire / vitesse)
+MOTEUR = os.environ.get("DETECTEUR_MOTEUR") or (
+    "torch" if torch is not None and (MODELES / "cnn_best.pt").exists() else "onnx")
 P, S = 64, 32                       # patchs 64 × 64 au pas de 32 (CFG du carnet)
 T_DIFF, T_STAR = 1000, 150
 HU_MIN, HU_MAX = -1024, 3071
@@ -116,108 +121,6 @@ def slice_patch_features(img, lung, coords=None):
 
 
 # ------------------------------------------------------------------ branche CNN (§7)
-class BayarConv(nn.Module):
-    def __init__(self, cin=1, cout=3, k=5):
-        super().__init__(); self.k = k
-        self.w = nn.Parameter(torch.randn(cout, cin, k, k) * 0.01)
-        m = torch.ones(cout, cin, k, k); m[:, :, k // 2, k // 2] = 0
-        c = torch.zeros(cout, cin, k, k); c[:, :, k // 2, k // 2] = -1
-        self.register_buffer("mask", m); self.register_buffer("center", c)
-
-    def forward(self, x):
-        w = self.w * self.mask
-        w = w / (w.sum(dim=(2, 3), keepdim=True) + 1e-8) + self.center
-        return F.conv2d(x, w, padding=self.k // 2)
-
-
-def srm_bank():
-    kv = torch.tensor(FZ.K_KV); s3 = torch.zeros(5, 5); s3[1:4, 1:4] = torch.tensor(FZ.K_SRM3)
-    d1 = torch.zeros(5, 5); d1[2, 2], d1[2, 3] = -1, 1
-    return torch.stack([kv, s3, d1])[:, None]
-
-
-class Up(nn.Module):
-    def __init__(self, cin, cskip, cout):
-        super().__init__()
-        self.conv = nn.Sequential(nn.Conv2d(cin + cskip, cout, 3, padding=1), nn.BatchNorm2d(cout), nn.ReLU(True),
-                                  nn.Conv2d(cout, cout, 3, padding=1), nn.BatchNorm2d(cout), nn.ReLU(True))
-
-    def forward(self, x, skip):
-        x = F.interpolate(x, size=skip.shape[-2:], mode="bilinear", align_corners=False)
-        return self.conv(torch.cat([x, skip], 1))
-
-
-class ForensicUNet(nn.Module):
-    def __init__(self, encoder="efficientnet_b0"):
-        super().__init__()
-        import timm
-        self.bayar = BayarConv(1, 3, 5)
-        self.register_buffer("srm", srm_bank())
-        # pretrained=False : les poids viennent de cnn_best.pt (aucun téléchargement)
-        self.enc = timm.create_model(encoder, features_only=True, pretrained=False, in_chans=7)
-        ch = self.enc.feature_info.channels()
-        self.cls = nn.Sequential(nn.AdaptiveAvgPool2d(1), nn.Flatten(), nn.Dropout(0.3), nn.Linear(ch[-1], 1))
-        self.ups = nn.ModuleList()
-        cur = ch[-1]
-        for c in reversed(ch[:-1]):
-            self.ups.append(Up(cur, c, max(32, c))); cur = max(32, c)
-        self.seg = nn.Conv2d(cur, 1, 1)
-
-    def forward(self, x):
-        x7 = torch.cat([x, self.bayar(x), F.conv2d(x, self.srm, padding=2)], 1)
-        feats = self.enc(x7)
-        logit = self.cls(feats[-1]).squeeze(1)
-        d = feats[-1]
-        for up, sk in zip(self.ups, reversed(feats[:-1])):
-            d = up(d, sk)
-        seg = F.interpolate(self.seg(d), size=x.shape[-2:], mode="bilinear", align_corners=False)
-        return logit, seg[:, 0]
-
-
-# ------------------------------------------------------------------ branche diffusion (§8)
-class TEmb(nn.Module):
-    def __init__(self, d=128):
-        super().__init__(); self.d = d
-        self.mlp = nn.Sequential(nn.Linear(d, 4 * d), nn.SiLU(), nn.Linear(4 * d, 4 * d))
-
-    def forward(self, t):
-        half = self.d // 2
-        f = torch.exp(-math.log(10000) * torch.arange(half, device=t.device) / half)
-        a = t.float()[:, None] * f[None]
-        return self.mlp(torch.cat([a.sin(), a.cos()], 1))
-
-
-class ResB(nn.Module):
-    def __init__(self, i, o, td=512):
-        super().__init__()
-        self.n1, self.c1 = nn.GroupNorm(8, i), nn.Conv2d(i, o, 3, padding=1)
-        self.t = nn.Linear(td, o)
-        self.n2, self.c2 = nn.GroupNorm(8, o), nn.Conv2d(o, o, 3, padding=1)
-        self.sk = nn.Conv2d(i, o, 1) if i != o else nn.Identity()
-
-    def forward(self, x, te):
-        h = self.c1(F.silu(self.n1(x))) + self.t(te)[:, :, None, None]
-        return self.c2(F.silu(self.n2(h))) + self.sk(x)
-
-
-class DiffUNet(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.te = TEmb(128); self.inc = nn.Conv2d(1, 64, 3, padding=1)
-        self.d1, self.d2, self.d3, self.mid = ResB(64, 64), ResB(64, 128), ResB(128, 256), ResB(256, 256)
-        self.u3, self.u2, self.u1 = ResB(512, 128), ResB(256, 64), ResB(128, 64)
-        self.no, self.out = nn.GroupNorm(8, 64), nn.Conv2d(64, 1, 3, padding=1)
-
-    def forward(self, x, t):
-        te = self.te(t); x0 = self.inc(x)
-        h1 = self.d1(x0, te); h2 = self.d2(F.avg_pool2d(h1, 2), te); h3 = self.d3(F.avg_pool2d(h2, 2), te)
-        m = self.mid(F.avg_pool2d(h3, 2), te)
-        u = self.u3(torch.cat([F.interpolate(m, scale_factor=2), h3], 1), te)
-        u = self.u2(torch.cat([F.interpolate(u, scale_factor=2), h2], 1), te)
-        u = self.u1(torch.cat([F.interpolate(u, scale_factor=2), h1], 1), te)
-        return self.out(F.silu(self.no(u)))
-
-
 # ------------------------------------------------------------------ fusion robuste (§9, ajout du 09/11/2026)
 class PositiveLogit:
     """Régression logistique à poids positifs ou nuls (classe du carnet, nécessaire pour relire la fusion)."""
@@ -268,13 +171,23 @@ class Detecteur:
         m = joblib.load(self.dossier / "modeles_fusion.joblib")
         self.forensic_clf, self.local_fuser, self.meta = m["forensic_clf"], m["local_fuser"], m["meta"]
         self.fusion, self.fusion_choix = m["fusion"], m["fusion_choix"]
-        self.cnn = ForensicUNet().to(device)
-        self.cnn.load_state_dict(torch.load(self.dossier / "cnn_best.pt", map_location=device)); self.cnn.eval()
-        self.ddpm = DiffUNet().to(device)
-        self.ddpm.load_state_dict(torch.load(self.dossier / "ddpm_attaquant.pt", map_location=device)); self.ddpm.eval()
-        betas = torch.linspace(1e-4, 0.02, T_DIFF, device=device)
-        self.betas, self.alphas = betas, 1 - betas
-        self.abar = torch.cumprod(self.alphas, 0)
+        # moteur des réseaux : PyTorch (poids .pt) ou ONNX Runtime (mêmes réseaux exportés, sans PyTorch)
+        self.moteur = MOTEUR
+        if self.moteur == "torch":
+            import reseaux_torch as RT
+            self.cnn = RT.ForensicUNet().to(device)
+            self.cnn.load_state_dict(torch.load(self.dossier / "cnn_best.pt", map_location=device)); self.cnn.eval()
+            self.ddpm = RT.DiffUNet().to(device)
+            self.ddpm.load_state_dict(torch.load(self.dossier / "ddpm_attaquant.pt", map_location=device))
+            self.ddpm.eval()
+        else:
+            import onnxruntime as ort
+            o = ort.SessionOptions(); o.intra_op_num_threads = int(os.environ.get("DETECTEUR_THREADS", "0"))
+            o.enable_cpu_mem_arena = False; o.enable_mem_pattern = False   # mémoire rendue après chaque lot
+            self._ort = lambda nom: ort.InferenceSession(str(self.dossier / nom), o, providers=["CPUExecutionProvider"])
+            self.cnn, self.ddpm = self._ort("cnn.onnx"), self._ort("ddpm.onnx")
+        betas = np.linspace(1e-4, 0.02, T_DIFF, dtype=np.float32)    # = torch.linspace (float32)
+        self.abar = np.cumprod(1 - betas, dtype=np.float32)
         sel = self.dossier / "selection_fusion.json"
         if not sel.exists():                     # dossier complet : les JSON sont dans scores_et_tableaux
             sel = self.dossier.parent / "scores_et_tableaux" / "selection_fusion.json"
@@ -282,32 +195,49 @@ class Detecteur:
         self._gan = None
 
     # ---------------------------------------------------------- branches
-    @torch.no_grad()
+    def _cnn(self, x):
+        """x : (N, 1, 64, 64) float32 → logits (N,), segmentation (N, 64, 64)."""
+        if self.moteur == "torch":
+            with torch.no_grad():
+                lo, se = self.cnn(torch.from_numpy(x).to(self.device))
+            return lo.cpu().numpy(), se.cpu().numpy()
+        return tuple(self.cnn.run(None, {"x": x}))
+
+    def _eps(self, x, t):
+        """Bruit prédit par le DDPM ; x : (N, 1, 64, 64) float32, t : (N,) int64."""
+        if self.moteur == "torch":
+            with torch.no_grad():
+                return self.ddpm(torch.from_numpy(x).to(self.device), torch.from_numpy(t).to(self.device)).cpu().numpy()
+        return self.ddpm.run(None, {"x": x, "t": t})[0]
+
     def cnn_patch(self, img, coords):
         if not coords:
             return np.zeros(0), np.zeros((0, P, P))
         X = np.stack([img[y:y + P, x:x + P] for y, x in coords]).astype(np.float32)
         pr, sg = [], []
-        for b in range(0, len(X), 128):
-            lo, se = self.cnn(torch.tensor(hu_to_net(X[b:b + 128]))[:, None].to(self.device))
-            pr.append(torch.sigmoid(lo).cpu().numpy()); sg.append(torch.sigmoid(se).cpu().numpy())
+        for b in range(0, len(X), LOT):
+            lo, se = self._cnn(np.ascontiguousarray(hu_to_net(X[b:b + LOT])[:, None], np.float32))
+            pr.append(1 / (1 + np.exp(-lo))); sg.append(1 / (1 + np.exp(-se)))
         return np.concatenate(pr), np.concatenate(sg)
 
-    @torch.no_grad()
-    def diffusion_score(self, patches_hu, n_draws=3, bs=128, seed=0):
-        g = torch.Generator(device=self.device).manual_seed(seed)   # tirages reproductibles d'une analyse à l'autre
+    def diffusion_score(self, patches_hu, n_draws=3, seed=0):
+        # tirages reproductibles d'une analyse à l'autre, identiques avec les deux moteurs et quelle que soit la
+        # taille des lots (générateur NumPy, bruit tiré d'un bloc pour toute la coupe)
+        bs = LOT
+        g = np.random.default_rng(seed)
+        bruit = g.standard_normal((n_draws, len(patches_hu), 1, P, P), dtype=np.float32)
         ab = self.abar[T_STAR]
         out = []
         for b in range(0, len(patches_hu), bs):
-            x0 = torch.tensor(to_gan(patches_hu[b:b + bs])[:, None], device=self.device)
-            t = torch.full((len(x0),), T_STAR, device=self.device, dtype=torch.long)
-            acc = torch.zeros(len(x0), device=self.device)
-            for _ in range(n_draws):
-                eps = torch.randn(x0.shape, generator=g, device=self.device)
-                xt = ab.sqrt() * x0 + (1 - ab).sqrt() * eps
-                x0h = (xt - (1 - ab).sqrt() * self.ddpm(xt, t)) / ab.sqrt()
+            x0 = to_gan(patches_hu[b:b + bs])[:, None].astype(np.float32)
+            t = np.full(len(x0), T_STAR, np.int64)
+            acc = np.zeros(len(x0), np.float32)
+            for k in range(n_draws):
+                eps = bruit[k, b:b + bs]
+                xt = np.sqrt(ab) * x0 + np.sqrt(1 - ab) * eps
+                x0h = (xt - np.sqrt(1 - ab) * self._eps(xt.astype(np.float32), t)) / np.sqrt(ab)
                 acc += ((x0h - x0) ** 2).mean((1, 2, 3))
-            out.append((acc / n_draws).cpu().numpy())
+            out.append(acc / n_draws)
         return np.concatenate(out) if out else np.zeros(0)
 
     def branch_outputs(self, img, lung):
@@ -355,36 +285,23 @@ class Detecteur:
             duplication=bo["dup"])
 
     # ---------------------------------------------------------- générateur GAN (démonstration uniquement)
-    def gan(self):
+    def gan(self, x):
+        """Générateur pix2pix chargé à la première demande ; x : (1, 3, 64, 64) float32 → (1, 1, 64, 64)."""
         if self._gan is None:
-            self._gan = UNetG().to(self.device)
-            self._gan.load_state_dict(torch.load(self.dossier / "gan_G.pt", map_location=self.device))
-            self._gan.eval()
-        return self._gan
+            if self.moteur == "torch":
+                import reseaux_torch as RT
+                self._gan = RT.UNetG().to(self.device)
+                self._gan.load_state_dict(torch.load(self.dossier / "gan_G.pt", map_location=self.device))
+                self._gan.eval()
+            else:
+                self._gan = self._ort("gan.onnx")
+        if self.moteur == "torch":
+            with torch.no_grad():
+                return self._gan(torch.from_numpy(x).to(self.device)).cpu().numpy()
+        return self._gan.run(None, {"x": x})[0]
 
 
 # ------------------------------------------------------------------ attaques de démonstration (§3)
-def cbr(i, o):
-    return nn.Sequential(nn.Conv2d(i, o, 3, padding=1), nn.BatchNorm2d(o), nn.LeakyReLU(0.2, True),
-                         nn.Conv2d(o, o, 3, padding=1), nn.BatchNorm2d(o), nn.LeakyReLU(0.2, True))
-
-
-class UNetG(nn.Module):
-    def __init__(self, cin=3, b=48):
-        super().__init__()
-        self.e1, self.e2, self.e3, self.bt = cbr(cin, b), cbr(b, 2 * b), cbr(2 * b, 4 * b), cbr(4 * b, 8 * b)
-        self.u3, self.d3 = nn.ConvTranspose2d(8 * b, 4 * b, 2, 2), cbr(8 * b, 4 * b)
-        self.u2, self.d2 = nn.ConvTranspose2d(4 * b, 2 * b, 2, 2), cbr(4 * b, 2 * b)
-        self.u1, self.d1 = nn.ConvTranspose2d(2 * b, b, 2, 2), cbr(2 * b, b)
-        self.out = nn.Conv2d(b, 1, 1)
-
-    def forward(self, x):
-        e1 = self.e1(x); e2 = self.e2(F.max_pool2d(e1, 2)); e3 = self.e3(F.max_pool2d(e2, 2)); bt = self.bt(F.max_pool2d(e3, 2))
-        d3 = self.d3(torch.cat([self.u3(bt), e3], 1)); d2 = self.d2(torch.cat([self.u2(d3), e2], 1))
-        d1 = self.d1(torch.cat([self.u1(d2), e1], 1))
-        return torch.tanh(self.out(d1))
-
-
 CENTER = np.zeros((P, P), np.float32); CENTER[P // 4:3 * P // 4, P // 4:3 * P // 4] = 1
 
 
@@ -447,14 +364,12 @@ def atk_inpaint(img, lung, nod, rng):
     return blend_patch(img, patch, cy, cx, mad_sigma(img, lung), rng)
 
 
-@torch.no_grad()
 def gan_fill(det, patch_hu, cond):
-    G = det.gan()
-    y = torch.tensor(to_gan(patch_hu)[None, None], device=det.device)
-    m = torch.tensor(CENTER, device=det.device)[None, None].expand_as(y)
-    c = torch.tensor([cond], device=det.device).view(-1, 1, 1, 1).float().expand_as(y)
-    x = torch.cat([y * (1 - m), m, c], 1)
-    return from_gan((y * (1 - m) + G(x) * m)[0, 0].cpu().numpy())
+    y = to_gan(patch_hu)[None, None].astype(np.float32)
+    m = np.broadcast_to(CENTER[None, None], y.shape)
+    c = np.full(y.shape, float(cond), np.float32)
+    x = np.ascontiguousarray(np.concatenate([y * (1 - m), m, c], 1), np.float32)
+    return from_gan((y * (1 - m) + det.gan(x) * m)[0, 0])
 
 
 def paste_center(img, lung, new_patch, cy, cx, rng):

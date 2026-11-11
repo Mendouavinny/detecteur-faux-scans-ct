@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: detecteur-faux-scans-ct
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements-render.txt && python telecharger_modeles.py
+    startCommand: python app.py
+    healthCheckPath: /
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
+      - key: GRADIO_SERVER_NAME
+        value: 0.0.0.0
+      - key: DETECTEUR_MOTEUR
+        value: onnx
+      - key: EN_LIGNE
+        value: "1"
+      - key: DETECTEUR_THREADS
+        value: "1"
