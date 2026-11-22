@@ -7,6 +7,11 @@
 <meta name="description" content="Application du mémoire de Master de Vinny Jordan Mendoua (ENSPD, Université de Douala) : détecter et localiser les falsifications d'une coupe de scanner thoracique par l'analyse du bruit, directement dans le navigateur.">
 <meta name="theme-color" content="#E6ECEF">
 <link rel="icon" href="img/icone.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="img/icone-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Faux scans CT">
 <link rel="preload" href="polices/InterDisplay-SemiBold.woff" as="font" type="font/woff" crossorigin>
 <link rel="preload" href="polices/Inter-Regular.woff" as="font" type="font/woff" crossorigin>
 <link rel="stylesheet" href="css/style.css">
@@ -27,6 +32,7 @@
     <a href="#resultats">Résultats</a>
     <a href="#code">Code</a>
   </nav>
+  <button class="lien-github installer" id="installer" type="button" hidden>Installer l'application</button>
   <a class="lien-github" href="https://github.com/Mendouavinny/detecteur-faux-scans-ct" rel="noopener">GitHub</a>
 </header>
 
@@ -78,7 +84,7 @@
 <section class="labo" id="analyser" aria-labelledby="titre-labo">
   <div class="labo-tete">
     <h2 id="titre-labo">Analyser une coupe</h2>
-    <p>Choisissez une coupe authentique de la base LIDC-IDRI ou ouvrez votre propre fichier DICOM. Vous pouvez ensuite la falsifier pour voir ce que le bruit révèle. Le calcul se fait dans ce navigateur : aucun fichier n'est envoyé.</p>
+    <p>Choisissez une coupe authentique de la base LIDC-IDRI ou ouvrez votre propre fichier DICOM, puis falsifiez-la si vous voulez voir ce que le détecteur révèle. Le calcul se fait dans votre navigateur, sur téléphone comme sur ordinateur : aucune image n'est envoyée.</p>
   </div>
 
   <div class="outils">
@@ -87,19 +93,27 @@
       <select id="choix-exemple"></select>
     </label>
     <label class="bouton fichier">
-      <input type="file" id="fichier" accept=".dcm,application/dicom,*/*">
+      <input type="file" id="fichier" accept=".dcm,.dicom,application/dicom,application/octet-stream,*/*">
       Ouvrir un fichier DICOM
     </label>
-    <fieldset class="segments" id="attaques">
-      <legend>Falsifier la coupe</legend>
-      <div class="segments-boutons">
-        <label><input type="radio" name="attaque" value="aucune" checked><span>Aucune</span></label>
-        <label><input type="radio" name="attaque" value="nodule"><span>Nodule injecté</span></label>
-        <label><input type="radio" name="attaque" value="copie"><span>Copier-déplacer</span></label>
-        <label><input type="radio" name="attaque" value="bruit"><span>Bruit ajouté</span></label>
-        <label><input type="radio" name="attaque" value="lissage"><span>Lissage</span></label>
-      </div>
-    </fieldset>
+    <label class="champ">
+      <span>Falsification</span>
+      <select id="choix-attaque">
+        <option value="aucune">Aucune : coupe authentique</option>
+        <option value="gan">Nodule injecté par le GAN du mémoire</option>
+        <option value="suppression">Nodule effacé par le GAN du mémoire</option>
+        <option value="copie">Copier-déplacer</option>
+        <option value="bruit">Bruit ajouté</option>
+        <option value="lissage">Retouche par lissage</option>
+        <option value="nodule">Nodule synthétique sans bruit</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="modele" role="radiogroup" aria-label="Modèle utilisé">
+    <label class="mode"><input type="radio" name="mode" value="rapide" checked><span><b>Branche du bruit</b><small>instantanée, sans téléchargement</small></span></label>
+    <label class="mode"><input type="radio" name="mode" value="complet"><span><b>Détecteur complet</b><small>bruit, CNN et diffusion, comme dans le mémoire</small></span></label>
+    <label class="option-diffusion"><input type="checkbox" id="avec-diffusion" checked> Inclure la branche diffusion <small>(la plus lente ; son poids dans la fusion est presque nul)</small></label>
   </div>
 
   <div class="labo-grille">
@@ -118,6 +132,7 @@
         <button role="tab" data-couche="residu" aria-selected="false">Résidu</button>
         <button role="tab" data-couche="bruit" aria-selected="false">Niveau du bruit</button>
         <button role="tab" data-couche="proba" aria-selected="false">Patchs suspects</button>
+        <button role="tab" data-couche="cnn" aria-selected="false" disabled>Carte du CNN</button>
         <button role="tab" data-couche="copie" aria-selected="false">Copies exactes</button>
       </div>
       <p class="aide" id="aide-film"></p>
@@ -125,14 +140,20 @@
     </div>
 
     <aside class="verdict" aria-live="polite">
-      <p class="verdict-etiquette">Verdict de la branche forensique</p>
+      <p class="verdict-etiquette" id="verdict-etiquette">Verdict de la branche du bruit</p>
       <p class="verdict-mot" id="verdict-mot">—</p>
       <div class="jauge" aria-hidden="true">
-        <div class="jauge-piste"><div class="jauge-valeur" id="jauge-valeur"></div><div class="jauge-avant" id="jauge-avant" hidden></div></div>
-        <div class="jauge-seuils"><span style="left:50%">0,5</span><span style="left:85%">0,85</span></div>
+        <div class="jauge-piste" id="jauge-piste"><div class="jauge-valeur" id="jauge-valeur"></div><div class="jauge-avant" id="jauge-avant" hidden></div></div>
+        <div class="jauge-seuils"><span id="seuil1" style="left:50%">0,5</span><span id="seuil2" style="left:85%">0,85</span></div>
       </div>
-      <p class="verdict-score"><span id="score">—</span> <small>score de la coupe (moyenne des 3 patchs les plus suspects)</small></p>
+      <p class="verdict-score"><span id="score">—</span> <small id="score-def">score de la coupe (moyenne des 3 patchs les plus suspects)</small></p>
+      <div class="progression" id="progression" hidden>
+        <p id="progression-texte">Préparation…</p>
+        <progress id="progression-barre" max="1" value="0"></progress>
+        <button class="lien-bouton" id="annuler" type="button">Revenir à la branche du bruit</button>
+      </div>
       <p class="comparaison" id="comparaison" hidden></p>
+      <dl class="mesures branches" id="branches" hidden></dl>
       <dl class="mesures">
         <div><dt>Patchs analysés</dt><dd id="m-patchs">—</dd></div>
         <div><dt>Copie exacte</dt><dd id="m-copie">—</dd></div>
@@ -140,12 +161,39 @@
         <div><dt>Empreinte SHA-256</dt><dd id="m-sha" class="sha">—</dd></div>
       </dl>
       <details class="note">
-        <summary>Quel modèle tourne ici ?</summary>
-        <p>La branche forensique du détecteur, telle qu'elle est publiée avec l'application : 27 descripteurs du bruit par patch de 64 × 64 pixels, puis un classifieur à gradient boosting de 213 arbres, entraîné sur 120 patients LIDC-IDRI. Le code JavaScript reproduit exactement les probabilités du code Python sur 50 coupes de contrôle.</p>
-        <p>Le détecteur hybride complet (CNN, diffusion et fusion) demande un serveur. Il est dans le dépôt, avec <code>app.py</code>, et <a href="https://detecteur-faux-scans-ct.onrender.com" rel="noopener">en ligne sur un serveur gratuit</a> : le premier accès prend environ une minute.</p>
-        <p>C'est un outil de recherche, pas un dispositif médical. Une alerte invite à vérifier, elle ne prouve rien.</p>
+        <summary>Réglages de l'alerte</summary>
+        <label class="reglage">Au-dessus de <output id="v-tau1">0,50</output> : à vérifier
+          <input type="range" id="tau1" min="0.05" max="0.95" step="0.01" value="0.5"></label>
+        <label class="reglage">Au-dessus de <output id="v-tau2">0,85</output> : alerte
+          <input type="range" id="tau2" min="0.1" max="0.99" step="0.01" value="0.85"></label>
+        <p>0,5 est le seuil de décision du mémoire ; 0,85 correspond au 95ᵉ centile des coupes authentiques de validation. Aucun de ces seuils n'est calibré cliniquement.</p>
+      </details>
+      <details class="note">
+        <summary>Quels modèles tournent ici ?</summary>
+        <p><b>Branche du bruit</b> : 27 descripteurs par patch de 64 × 64 pixels, puis un classifieur de 213 arbres. Le code JavaScript reproduit exactement les probabilités du code Python.</p>
+        <p><b>Détecteur complet</b> : la même branche, plus le CNN (couche de Bayar, SRM, EfficientNet-B0 et U-Net) et le DDPM de la branche diffusion, exécutés avec ONNX Runtime Web. Une fusion locale puis une fusion robuste donnent le score. Les réseaux (34 Mo) sont téléchargés une fois depuis le dépôt de modèles du mémoire, vérifiés par empreinte SHA-256, puis gardés dans le navigateur.</p>
+        <p>Ces modèles viennent de l'exécution du carnet publiée avec l'application (120 patients LIDC-IDRI). C'est un outil de recherche, pas un dispositif médical : une alerte invite à vérifier, elle ne prouve rien.</p>
       </details>
     </aside>
+  </div>
+
+  <div class="journal" id="journal">
+    <div class="journal-tete">
+      <h3>Journal d'audit</h3>
+      <p>Chaque analyse est inscrite ici avec l'empreinte de l'entrée précédente : modifier une ligne casse la chaîne. Le journal reste dans ce navigateur.</p>
+      <div class="journal-actions">
+        <button class="bouton petit" id="j-verifier" type="button">Vérifier la chaîne</button>
+        <button class="bouton petit" id="j-exporter" type="button">Exporter</button>
+        <button class="bouton petit" id="j-effacer" type="button">Effacer</button>
+        <span id="j-etat" class="journal-etat" role="status"></span>
+      </div>
+    </div>
+    <div class="journal-table">
+      <table>
+        <thead><tr><th>Heure</th><th>Coupe</th><th>Modèle</th><th>Score</th><th>Verdict</th><th>Empreinte</th></tr></thead>
+        <tbody id="j-lignes"><tr><td colspan="6" class="vide">Aucune analyse pour l'instant.</td></tr></tbody>
+      </table>
+    </div>
   </div>
 </section>
 
@@ -197,7 +245,7 @@
   </ol>
 
   <h3 class="sous-titre">Le détecteur complet du mémoire</h3>
-  <p class="prose colonne">Dans le mémoire, cette branche du bruit est l'une des trois branches d'une architecture hybride. Une fusion « du local au global » combine leurs scores. La branche en bleu nuit est celle qui tourne dans cette page.</p>
+  <p class="prose colonne">Dans le mémoire, cette branche du bruit est l'une des trois branches d'une architecture hybride. Une fusion « du local au global » combine leurs scores. Les trois branches et les deux fusions tournent dans cette page ; le module de sécurité y est réduit à l'empreinte et au journal.</p>
   <div class="archi" role="img" aria-label="Architecture : coupe DICOM, prétraitement, patchs, trois branches (forensique, CNN, diffusion), fusion, décision et carte, module de sécurité">
     <div class="a-col">
       <div class="a-boite">Coupe DICOM</div>
@@ -206,8 +254,8 @@
     </div>
     <div class="a-col branches">
       <div class="a-boite ici">Branche forensique<small>4 résidus, 27 descripteurs, gradient boosting</small></div>
-      <div class="a-boite">Branche CNN<small>couche de Bayar + SRM, EfficientNet-B0, U-Net (4,27 M paramètres)</small></div>
-      <div class="a-boite">Branche diffusion<small>DDPM appris sur des patchs authentiques, erreur de reconstruction</small></div>
+      <div class="a-boite ici">Branche CNN<small>couche de Bayar + SRM, EfficientNet-B0, U-Net (4,27 M paramètres)</small></div>
+      <div class="a-boite ici">Branche diffusion<small>DDPM appris sur des patchs authentiques, erreur de reconstruction</small></div>
     </div>
     <div class="a-col">
       <div class="a-boite apport">Fusion du local au global<small>scores des patchs + 40 descripteurs de la coupe, méta-classifieur, seuil fixé sur la validation</small></div>
@@ -215,7 +263,7 @@
       <div class="a-boite pointille">Module de sécurité (prototype)<small>empreinte SHA-256, journal chaîné</small></div>
     </div>
   </div>
-  <p class="legende-archi"><span class="pastille ici"></span>tourne dans cette page<span class="pastille apport"></span>apport du mémoire</p>
+  <p class="legende-archi"><span class="pastille ici"></span>les trois branches<span class="pastille apport"></span>apport du mémoire</p>
 </section>
 
 <!-- ============================================================ RÉSULTATS -->
@@ -295,6 +343,7 @@ python app.py</code></pre>
   </div>
   <p>Vinny Jordan Mendoua, mémoire de Master 2 en science des données et intelligence artificielle, École nationale supérieure polytechnique de Douala.</p>
   <p>Coupes : base LIDC-IDRI (The Cancer Imaging Archive), licence CC BY 3.0. Armato et al., <i>Medical Physics</i> 38(2), 2011.</p>
+  <p>Sur téléphone ou tablette, l'application peut s'installer comme une application : menu du navigateur, puis « Installer l'application » ou « Sur l'écran d'accueil » (iPhone : bouton Partager). Une fois chargée, elle fonctionne aussi sans connexion.</p>
   <p>Outil de recherche, sans validation clinique. N'utilisez pas son verdict pour un diagnostic.</p>
 </footer>
 </body>

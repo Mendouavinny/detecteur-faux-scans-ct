@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vérification du détecteur complet dans le navigateur</title>
+<meta name="robots" content="noindex">
+<style>
+  body { font: 15px/1.5 system-ui, sans-serif; margin: 24px; color: #13212a; background: #e6ecef; }
+  table { border-collapse: collapse; background: #fff; }
+  th, td { padding: 6px 10px; border-bottom: 1px solid #c5d0d5; text-align: right; font-variant-numeric: tabular-nums; }
+  th:first-child, td:first-child { text-align: left; }
+  pre { background: #0a1115; color: #d5dee3; padding: 14px; border-radius: 8px; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h1>Vérification du détecteur complet</h1>
+<p>Cette page analyse les 10 coupes d'exemple avec le détecteur complet exécuté dans ce navigateur, et compare le score à celui du même détecteur en Python (application Gradio). La branche diffusion tire son bruit avec un autre générateur aléatoire que NumPy : de petits écarts sont attendus.</p>
+<p><label><input type="checkbox" id="diff" checked> avec la branche diffusion</label> <button id="go">Lancer</button></p>
+<pre id="resultat">En attente.</pre>
+<table><thead><tr><th>Coupe</th><th>Bruit (JS)</th><th>Complet (JS)</th><th>Complet (Python)</th><th>Écart</th><th>Durée</th></tr></thead><tbody id="t"></tbody></table>
+<script type="module">
+import { parseDicom, analyser } from "./js/forensique.js";
+import { analyseComplete, session } from "./js/hybride.js";
+const out = document.getElementById("resultat"), t = document.getElementById("t");
+const log = (s) => { out.textContent += "\n" + s; console.log(s); };
+async function go() {
+  out.textContent = "Chargement…"; t.innerHTML = "";
+  const avecDiffusion = document.getElementById("diff").checked;
+  const [model, cfg, ex] = await Promise.all(["modele/hgb_forensique.json", "modele/fusion.json", "exemples/index.json"].map((u) => fetch(u).then((r) => r.json())));
+  const t0 = performance.now();
+  await session("cnn.onnx", (i, n) => (out.textContent = `Téléchargement CNN ${i}/${n}`));
+  if (avecDiffusion) await session("ddpm.onnx", (i, n) => (out.textContent = `Téléchargement DDPM ${i}/${n}`));
+  log(`Réseaux prêts en ${((performance.now() - t0) / 1000).toFixed(1)} s`);
+  const ecarts = [];
+  for (const e of ex) {
+    const buf = await (await fetch("exemples/" + e.fichier)).arrayBuffer();
+    const d = parseDicom(buf);
+    const a = analyser(d.hu, d.rows, d.cols, model);
+    const t1 = performance.now();
+    const c = await analyseComplete(d.hu, d.cols, d.rows, a, cfg, { avecDiffusion });
+    const dt = (performance.now() - t1) / 1000, ec = Math.abs(c.score - e.score_hybride_python);
+    ecarts.push(ec);
+    t.insertAdjacentHTML("beforeend", `<tr><td>${e.patient} / ${e.coupe}</td><td>${a.score.toFixed(3)}</td><td>${c.score.toFixed(3)}</td><td>${e.score_hybride_python.toFixed(3)}</td><td>${ec.toFixed(3)}</td><td>${dt.toFixed(1)} s</td></tr>`);
+    log(`${e.patient}/${e.coupe} patchs=${a.coords.length} bruit=${a.score.toFixed(3)} complet=${c.score.toFixed(3)} python=${e.score_hybride_python} écart=${ec.toFixed(4)} cnn=${c.branches.cnn.toFixed(3)} diff=${c.branches.diffusion.toFixed(2)} ${dt.toFixed(1)}s`);
+  }
+  log(`RÉSUMÉ diffusion=${avecDiffusion} écart moyen=${(ecarts.reduce((x, y) => x + y, 0) / ecarts.length).toFixed(4)} écart max=${Math.max(...ecarts).toFixed(4)} durée totale=${((performance.now() - t0) / 1000).toFixed(1)} s`);
+}
+document.getElementById("go").addEventListener("click", () => go().catch((e) => log("ERREUR " + e.message)));
+if (location.hash === "#auto") go().catch((e) => log("ERREUR " + e.message));
+</script>
+</body>
+</html>

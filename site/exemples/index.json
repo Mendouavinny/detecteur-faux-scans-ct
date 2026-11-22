@@ -3,90 +3,118 @@
   "fichier": "LIDC-IDRI-0139_coupe031.dcm",
   "patient": "LIDC-IDRI-0139",
   "coupe": 31,
-  "nodules": 1,
-  "score": 0.018,
+  "nodules": [
+   [
+    311,
+    109,
+    26.92839805577584
+   ]
+  ],
   "fabricant": "GE MEDICAL SYSTEMS",
-  "noyau": "STANDARD"
+  "noyau": "STANDARD",
+  "score_hybride_python": 0.038,
+  "score_forensique": 0.018
  },
  {
   "fichier": "LIDC-IDRI-0085_coupe086.dcm",
   "patient": "LIDC-IDRI-0085",
   "coupe": 86,
-  "nodules": 0,
-  "score": 0.05,
+  "nodules": [],
   "fabricant": "GE MEDICAL SYSTEMS",
-  "noyau": "STANDARD"
+  "noyau": "STANDARD",
+  "score_hybride_python": 0.047,
+  "score_forensique": 0.05
  },
  {
   "fichier": "LIDC-IDRI-0167_coupe053.dcm",
   "patient": "LIDC-IDRI-0167",
   "coupe": 53,
-  "nodules": 0,
-  "score": 0.065,
+  "nodules": [],
   "fabricant": "GE MEDICAL SYSTEMS",
-  "noyau": "STANDARD"
+  "noyau": "STANDARD",
+  "score_hybride_python": 0.04,
+  "score_forensique": 0.065
  },
  {
   "fichier": "LIDC-IDRI-0340_coupe035.dcm",
   "patient": "LIDC-IDRI-0340",
   "coupe": 35,
-  "nodules": 0,
-  "score": 0.225,
+  "nodules": [],
   "fabricant": "GE MEDICAL SYSTEMS",
-  "noyau": "STANDARD"
+  "noyau": "STANDARD",
+  "score_hybride_python": 0.551,
+  "score_forensique": 0.225
  },
  {
   "fichier": "LIDC-IDRI-0340_coupe060.dcm",
   "patient": "LIDC-IDRI-0340",
   "coupe": 60,
-  "nodules": 1,
-  "score": 0.236,
+  "nodules": [
+   [
+    332,
+    395,
+    18.506125748641217
+   ]
+  ],
   "fabricant": "GE MEDICAL SYSTEMS",
-  "noyau": "STANDARD"
+  "noyau": "STANDARD",
+  "score_hybride_python": 0.533,
+  "score_forensique": 0.236
  },
  {
   "fichier": "LIDC-IDRI-0345_coupe136.dcm",
   "patient": "LIDC-IDRI-0345",
   "coupe": 136,
-  "nodules": 0,
-  "score": 0.74,
+  "nodules": [],
   "fabricant": "SIEMENS",
-  "noyau": "B45f"
+  "noyau": "B45f",
+  "score_hybride_python": 0.782,
+  "score_forensique": 0.74
  },
  {
   "fichier": "LIDC-IDRI-0184_coupe072.dcm",
   "patient": "LIDC-IDRI-0184",
   "coupe": 72,
-  "nodules": 0,
-  "score": 0.865,
+  "nodules": [],
   "fabricant": "GE MEDICAL SYSTEMS",
-  "noyau": "LUNG"
+  "noyau": "LUNG",
+  "score_hybride_python": 0.375,
+  "score_forensique": 0.865
  },
  {
   "fichier": "LIDC-IDRI-0117_coupe057.dcm",
   "patient": "LIDC-IDRI-0117",
   "coupe": 57,
-  "nodules": 0,
-  "score": 0.908,
+  "nodules": [],
   "fabricant": "TOSHIBA",
-  "noyau": "FC01"
+  "noyau": "FC01",
+  "score_hybride_python": 0.814,
+  "score_forensique": 0.908
  },
  {
   "fichier": "LIDC-IDRI-0126_coupe097.dcm",
   "patient": "LIDC-IDRI-0126",
   "coupe": 97,
-  "nodules": 1,
-  "score": 0.982,
+  "nodules": [
+   [
+    212,
+    361,
+    4.153040254070076
+   ]
+  ],
   "fabricant": "GE MEDICAL SYSTEMS",
-  "noyau": "STANDARD"
+  "noyau": "STANDARD",
+  "score_hybride_python": 0.879,
+  "score_forensique": 0.982
  },
  {
   "fichier": "LIDC-IDRI-0126_coupe044.dcm",
   "patient": "LIDC-IDRI-0126",
   "coupe": 44,
-  "nodules": 0,
-  "score": 0.99,
+  "nodules": [],
   "fabricant": "GE MEDICAL SYSTEMS",
-  "noyau": "STANDARD"
+  "noyau": "STANDARD",
+  "score_hybride_python": 0.873,
+  "score_forensique": 0.99
  }
 ]

@@ -106,14 +106,55 @@ export function lissage(hu, h, w, cy, cx, r = 22) {
   return out;
 }
 
+/** Écart-type robuste du bruit dans le poumon, majoré de 20 % (mad_sigma du carnet). */
+function sigmaPoumon(hu, h, w, lung) {
+  const v = [];
+  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+    const p = y * w + x;
+    if (!lung[p]) continue;
+    const n = [hu[p - w - 1], hu[p - w], hu[p - w + 1], hu[p - 1], hu[p], hu[p + 1], hu[p + w - 1], hu[p + w], hu[p + w + 1]].sort((a, b) => a - b);
+    v.push(hu[p] - n[4]);
+  }
+  if (!v.length) return 10;
+  v.sort((a, b) => a - b);
+  const m = v[v.length >> 1], d = v.map((x) => Math.abs(x - m)).sort((a, b) => a - b);
+  return 1.4826 * d[d.length >> 1] * 1.2;
+}
+
+/** Colle le centre 40 × 40 d'un patch généré avec une fenêtre gaussienne et le bruit du poumon (blend_patch). */
+function collerCentre(hu, h, w, lung, patch, cy, cx, seed = 3) {
+  const out = Int16Array.from(hu), g = rng(seed), s = sigmaPoumon(hu, h, w, lung), c = 40;
+  for (let i = 0; i < c; i++) for (let j = 0; j < c; j++) {
+    const y = cy - c / 2 + i, x = cx - c / 2 + j;
+    if (y < 0 || x < 0 || y >= h || x >= w) continue;
+    const win = Math.exp(-(((i - c / 2) / (c / 3.2)) ** 2 + ((j - c / 2) / (c / 3.2)) ** 2));
+    const v = patch[(12 + i) * 64 + 12 + j] + s * gauss(g);
+    const q = y * w + x;
+    if (hu[q] < -1024) continue;                          // champ de vue conservé, comme l'application
+    out[q] = Math.max(-1024, Math.min(3071, Math.round(hu[q] * (1 - win) + v * win)));
+  }
+  return out;
+}
+
 export const ATTAQUES = {
-  nodule: { nom: "Nodule injecté (type GAN)", court: "nodule injecté" },
+  gan: { nom: "Nodule injecté par le GAN", court: "nodule injecté par GAN", reseau: true },
+  suppression: { nom: "Nodule effacé par le GAN", court: "nodule effacé par GAN", reseau: true, nodule: true },
   copie: { nom: "Copier-déplacer", court: "copier-déplacer" },
   bruit: { nom: "Bruit ajouté", court: "bruit ajouté" },
   lissage: { nom: "Retouche par lissage", court: "lissage" },
+  nodule: { nom: "Nodule synthétique sans bruit", court: "nodule synthétique" },
 };
 
-export function falsifier(type, hu, h, w, lung, cy, cx) {
+/**
+ * Falsifie la coupe. Les attaques par GAN utilisent le générateur pix2pix du mémoire (ganRemplir, fourni par
+ * hybride.js) : il est téléchargé à la première utilisation.
+ */
+export async function falsifier(type, hu, h, w, lung, cy, cx, ganRemplir) {
+  if (type === "gan" || type === "suppression") {
+    const y = Math.max(32, Math.min(h - 32, cy)), x = Math.max(32, Math.min(w - 32, cx));
+    const patch = await ganRemplir(y, x, type === "gan" ? 1 : 0);
+    return { hu: collerCentre(hu, h, w, lung, patch, y, x), cible: [y, x] };
+  }
   if (type === "nodule") return { hu: noduleLisse(hu, h, w, cy, cx) };
   if (type === "copie") return copierDeplacer(hu, h, w, cy, cx, lung);
   if (type === "bruit") return { hu: bruitLocal(hu, h, w, cy, cx) };

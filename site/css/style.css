@@ -187,12 +187,13 @@ h4 { font: 600 18px/1.3 var(--titre); letter-spacing: -.01em; margin: 0 0 8px; }
 .legende .degrade { width: 160px; height: 10px; border-radius: 5px; }
 
 .verdict { background: #fff; border: 1px solid var(--trait); border-radius: 14px; padding: 26px 26px 22px; position: sticky; top: 84px; }
+@media (max-width: 960px) { .verdict { position: static; } }
 .verdict-etiquette { margin: 0 0 4px; font-size: 13.5px; color: var(--ardoise); }
 .verdict-mot { font: 600 46px/1.05 var(--titre); letter-spacing: -.03em; margin: 0 0 18px; transition: color .2s; }
 .verdict-mot.conforme { color: var(--sain); } .verdict-mot.verifier { color: #b07612; } .verdict-mot.alerte { color: var(--signal); }
 .jauge { position: relative; margin-bottom: 26px; }
 .jauge-piste { position: relative; height: 10px; border-radius: 5px;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--sain) 22%, #fff) 0 50%, color-mix(in srgb, var(--ambre) 30%, #fff) 50% 85%, color-mix(in srgb, var(--signal) 24%, #fff) 85%); }
+  background: linear-gradient(90deg, color-mix(in srgb, var(--sain) 22%, #fff) 0 var(--t1, 50%), color-mix(in srgb, var(--ambre) 30%, #fff) var(--t1, 50%) var(--t2, 85%), color-mix(in srgb, var(--signal) 24%, #fff) var(--t2, 85%)); }
 .jauge-valeur, .jauge-avant { position: absolute; top: -5px; width: 4px; height: 20px; margin-left: -2px; border-radius: 2px; background: var(--encre); transition: left .45s cubic-bezier(.2,.8,.2,1); }
 .jauge-avant { background: var(--ardoise); opacity: .45; }
 @media (prefers-reduced-motion: reduce) { .jauge-valeur, .jauge-avant { transition: none; } }
@@ -302,4 +303,62 @@ h4 { font: 600 18px/1.3 var(--titre); letter-spacing: -.01em; margin: 0 0 8px; }
   .champ select { min-width: 0; width: 100%; }
   .champ { flex: 1 1 100%; }
   .verdict-mot { font-size: 38px; }
+}
+
+/* ------------------------------------------------------------ choix du modèle */
+.modele { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: stretch; margin: 0 0 22px; }
+.mode { position: relative; flex: 1 1 260px; max-width: 380px; }
+.mode input { position: absolute; opacity: 0; }
+.mode span { display: block; height: 100%; padding: 12px 16px; border-radius: 11px; border: 1px solid var(--trait); background: #fff; cursor: pointer; }
+.mode b { display: block; font: 600 15px/1.3 var(--titre); }
+.mode small { display: block; color: var(--ardoise); font-size: 13px; margin-top: 2px; }
+.mode input:checked + span { border-color: var(--encre); box-shadow: 0 0 0 1px var(--encre) inset; }
+.mode input:focus-visible + span { outline: 2px solid var(--ambre); outline-offset: 2px; }
+.option-diffusion { display: none; align-items: center; gap: 8px; font-size: 14px; flex: 1 1 100%; color: var(--encre); }
+.option-diffusion small { color: var(--ardoise); }
+.option-diffusion input { width: 18px; height: 18px; accent-color: var(--encre); }
+.modele.complet .option-diffusion { display: flex; }
+
+.progression { margin: 0 0 16px; padding: 12px 14px; border-radius: 10px; background: var(--feuille); font-size: 14px; }
+.progression p { margin: 0 0 8px; }
+.progression progress { width: 100%; height: 8px; accent-color: var(--encre); }
+.lien-bouton { background: none; border: 0; padding: 6px 0 0; color: var(--ardoise); text-decoration: underline; cursor: pointer; font: 13px var(--ui); }
+.branches { margin-bottom: 14px; }
+.branches dt small { display: block; font-size: 12px; color: var(--ardoise); opacity: .85; }
+.reglage { display: grid; gap: 6px; margin-top: 12px; font-size: 14px; color: var(--encre); }
+.reglage input { width: 100%; accent-color: var(--encre); }
+.installer { background: var(--encre); color: #fff; border-color: var(--encre); cursor: pointer; font-family: var(--ui); }
+
+/* ------------------------------------------------------------ journal d'audit */
+.journal { margin-top: 44px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 28px; align-items: start; }
+.journal-tete p { margin: 0 0 14px; color: var(--ardoise); font-size: 14.5px; }
+.journal-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.bouton.petit { padding: 8px 12px; font-size: 13.5px; background: #fff; }
+.journal-etat { font-size: 13.5px; color: var(--encre); flex: 1 1 100%; min-height: 1.4em; }
+.journal-table { overflow-x: auto; background: #fff; border: 1px solid var(--trait); border-radius: 12px; }
+.journal table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.journal th { text-align: left; font-weight: 500; color: var(--ardoise); padding: 10px 12px; border-bottom: 1px solid var(--trait); white-space: nowrap; }
+.journal td { padding: 9px 12px; border-bottom: 1px solid var(--feuille); vertical-align: top; font-variant-numeric: tabular-nums; }
+.journal td small { display: block; color: var(--signal); font-size: 12px; }
+.journal td.sha { font: 11.5px var(--annot); color: var(--ardoise); }
+.journal td.vide { color: var(--ardoise); text-align: center; padding: 18px; }
+@media (max-width: 960px) { .journal { grid-template-columns: 1fr; } }
+
+/* ------------------------------------------------------------ toucher (téléphones, tablettes) */
+.volet input[type=range] { touch-action: pan-y; }
+.film-labo { touch-action: manipulation; }
+@media (max-width: 620px) {
+  .outils { gap: 12px; }
+  .outils .champ, .outils .fichier { flex: 1 1 100%; }
+  .outils .fichier { justify-content: center; }
+  .champ select { min-width: 0; width: 100%; }
+  .mode { max-width: none; }
+  .couches button { padding: 8px 10px; font-size: 13.5px; }
+  .verdict { padding: 20px 18px; }
+  .labo { padding-inline: 16px; }
+  .barre { gap: 12px; }
+  .installer { font-size: 13px; padding: 6px 10px; }
+}
+@media (max-width: 620px) {
+  .journal th:nth-child(3), .journal td:nth-child(3), .journal th:nth-child(6), .journal td:nth-child(6) { display: none; }
 }
