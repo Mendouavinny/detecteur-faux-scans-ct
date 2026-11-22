@@ -1,0 +1,56 @@
+{
+ "version": "v7",
+ "patients": 300,
+ "ecretage": [
+  -1024,
+  3071
+ ],
+ "local": {
+  "coef": [
+   3.593869688300814,
+   4.820052901160687,
+   -0.055654843884066135,
+   0.0489511790549156
+  ],
+  "intercept": -3.54314909890383,
+  "entrees": [
+   "p_forensique",
+   "p_cnn",
+   "s_diffusion",
+   "|s_diffusion|"
+  ]
+ },
+ "loc2": {
+  "coef": [
+   3.5887582982592114,
+   4.824970480200896
+  ],
+  "intercept": -3.5106477437791583,
+  "entrees": [
+   "p_forensique",
+   "p_cnn"
+  ]
+ },
+ "meta": {
+  "entrees": "40 descripteurs de la coupe + agg(fusion locale, forensique, CNN, s, |s|)"
+ },
+ "meta2": {
+  "entrees": "40 descripteurs de la coupe + agg(fusion locale sans diffusion, forensique, CNN)"
+ },
+ "ddpm": {
+  "t_star": 150,
+  "abar": 0.7858868837356567,
+  "win_lo": -1100.0,
+  "win_hi": 300.0,
+  "tirages": 3
+ },
+ "seuils": {
+  "tau1": 0.5,
+  "tau2": 0.85
+ },
+ "versions": {
+  "scikit_learn": "1.6.1",
+  "torch": "2.11.0+cpu",
+  "numpy": "2.1.3"
+ }
+}
