@@ -4,14 +4,16 @@
   "patient": "LIDC-IDRI-0085",
   "coupe": 86,
   "nodules": [],
-  "score_authentique": 0.047
+  "score_authentique": 0.0045,
+  "score_trois_branches": 0.0432
  },
  {
   "fichier": "LIDC-IDRI-0117_coupe057.dcm",
   "patient": "LIDC-IDRI-0117",
   "coupe": 57,
   "nodules": [],
-  "score_authentique": 0.814
+  "score_authentique": 0.9249,
+  "score_trois_branches": 0.8095
  },
  {
   "fichier": "LIDC-IDRI-0126_coupe097.dcm",
@@ -24,14 +26,16 @@
     4.153040254070076
    ]
   ],
-  "score_authentique": 0.879
+  "score_authentique": 0.0821,
+  "score_trois_branches": 0.1397
  },
  {
   "fichier": "LIDC-IDRI-0126_coupe044.dcm",
   "patient": "LIDC-IDRI-0126",
   "coupe": 44,
   "nodules": [],
-  "score_authentique": 0.873
+  "score_authentique": 0.4073,
+  "score_trois_branches": 0.2136
  },
  {
   "fichier": "LIDC-IDRI-0139_coupe031.dcm",
@@ -44,21 +48,24 @@
     26.92839805577584
    ]
   ],
-  "score_authentique": 0.038
+  "score_authentique": 0.0002,
+  "score_trois_branches": 0.0005
  },
  {
   "fichier": "LIDC-IDRI-0167_coupe053.dcm",
   "patient": "LIDC-IDRI-0167",
   "coupe": 53,
   "nodules": [],
-  "score_authentique": 0.04
+  "score_authentique": 0.0044,
+  "score_trois_branches": 0.0011
  },
  {
   "fichier": "LIDC-IDRI-0184_coupe072.dcm",
   "patient": "LIDC-IDRI-0184",
   "coupe": 72,
   "nodules": [],
-  "score_authentique": 0.375
+  "score_authentique": 0.1739,
+  "score_trois_branches": 0.1484
  },
  {
   "fichier": "LIDC-IDRI-0340_coupe060.dcm",
@@ -71,20 +78,23 @@
     18.506125748641217
    ]
   ],
-  "score_authentique": 0.533
+  "score_authentique": 0.0177,
+  "score_trois_branches": 0.0049
  },
  {
   "fichier": "LIDC-IDRI-0340_coupe035.dcm",
   "patient": "LIDC-IDRI-0340",
   "coupe": 35,
   "nodules": [],
-  "score_authentique": 0.551
+  "score_authentique": 0.001,
+  "score_trois_branches": 0.0022
  },
  {
   "fichier": "LIDC-IDRI-0345_coupe136.dcm",
   "patient": "LIDC-IDRI-0345",
   "coupe": 136,
   "nodules": [],
-  "score_authentique": 0.782
+  "score_authentique": 0.1718,
+  "score_trois_branches": 0.054
  }
 ]

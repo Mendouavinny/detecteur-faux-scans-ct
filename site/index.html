@@ -321,14 +321,13 @@
 ├── app.py        détecteur complet avec interface (Gradio)
 ├── detecteur.py  les trois branches, la fusion, la sécurité
 ├── features.py   descripteurs du bruit
-├── modeles/      classifieurs et fusion entraînés
+├── modeles/      réseaux et classifieurs entraînés
 └── exemples/     10 coupes LIDC-IDRI de test</pre>
     <div class="commandes">
       <h3>Lancer le détecteur complet sur votre ordinateur</h3>
       <pre><code>git clone https://github.com/Mendouavinny/detecteur-faux-scans-ct
 cd detecteur-faux-scans-ct
 pip install -r requirements-render.txt
-python telecharger_modeles.py
 python app.py</code></pre>
       <p>Python 3.11 ou plus récent ; le calcul se fait sur processeur, sans carte graphique. Le même détecteur est aussi <a href="https://detecteur-faux-scans-ct.onrender.com" rel="noopener">en ligne</a>, sur un serveur gratuit qui met environ une minute à se réveiller.</p>
     </div>

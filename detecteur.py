@@ -33,14 +33,15 @@ sys.path.insert(0, str(ICI))
 import features as FZ  # noqa: E402  (copie de features.py écrit par le carnet, §5)
 
 def _dossier_modeles():
-    """Dossier des modèles : variable DETECTEUR_MODELES, sinon sorties du carnet, sinon copie du dossier complet."""
+    """Dossier des modèles de l'exécution à 120 patients (Detecteur) : variable DETECTEUR_MODELES, sinon sorties du
+    carnet, sinon copie du dossier complet. None s'il est absent (l'application utilise alors DetecteurV7)."""
     if os.environ.get("DETECTEUR_MODELES"):
         return Path(os.environ["DETECTEUR_MODELES"])
     for p in (ICI / "modeles", Path.home() / "Documents" / "GPU_ROCm" / "out",
               ICI.parent / "3_Resultats" / "modeles_entraines"):
         if (p / "modeles_fusion.joblib").exists():
             return p
-    raise FileNotFoundError("modeles_fusion.joblib introuvable : définir DETECTEUR_MODELES")
+    return None
 
 
 MODELES = _dossier_modeles()
@@ -48,7 +49,7 @@ DEVICE = torch.device(os.environ.get("DETECTEUR_DEVICE", "cpu")) if torch is not
 # moteur : DETECTEUR_MOTEUR=torch|onnx ; par défaut PyTorch s'il est installé et que les poids .pt sont présents
 LOT = int(os.environ.get("DETECTEUR_LOT", "32"))   # patchs par passage dans un réseau (mémoire / vitesse)
 MOTEUR = os.environ.get("DETECTEUR_MOTEUR") or (
-    "torch" if torch is not None and (MODELES / "cnn_best.pt").exists() else "onnx")
+    "torch" if torch is not None and MODELES is not None and (MODELES / "cnn_best.pt").exists() else "onnx")
 P, S = 64, 32                       # patchs 64 × 64 au pas de 32 (CFG du carnet)
 T_DIFF, T_STAR = 1000, 150
 HU_MIN, HU_MAX = -1024, 3071
@@ -191,7 +192,10 @@ def memoire(etape):
 
 # ------------------------------------------------------------------ chargement des modèles
 class Detecteur:
+    """Détecteur de l'exécution antérieure à 120 patients (fusion robuste). L'application utilise DetecteurV7."""
     def __init__(self, dossier=MODELES, device=DEVICE):
+        if dossier is None:
+            raise FileNotFoundError("modeles_fusion.joblib introuvable : définir DETECTEUR_MODELES")
         self.dossier, self.device = Path(dossier), device
         import __main__
         __main__.PositiveLogit = PositiveLogit      # la fusion a été enregistrée depuis le carnet (__main__)
@@ -354,6 +358,169 @@ class Detecteur:
         if getattr(self, "econome", False):      # générateur libéré aussitôt (démonstration seulement)
             self._gan = None
         return y
+
+
+# ------------------------------------------------------------------ exécution finale du mémoire (v7, 300 patients)
+def fichier_v7(nom):
+    """Fichier des modèles v7 : DETECTEUR_MODELES_V7, sinon modeles/v7 (réseaux), sinon site/modele/v7 (arbres)."""
+    dossiers = [Path(os.environ["DETECTEUR_MODELES_V7"])] if os.environ.get("DETECTEUR_MODELES_V7") else []
+    for d in dossiers + [ICI / "modeles" / "v7", ICI / "site" / "modele" / "v7"]:
+        if (d / nom).exists():
+            return d / nom
+    raise FileNotFoundError(f"{nom} introuvable (modeles/v7 ou site/modele/v7)")
+
+
+def v7_disponible():
+    try:
+        return all(fichier_v7(n) for n in ("cnn.onnx", "ddpm.onnx", "hgb_forensique.json", "hgb_meta2.json", "fusion.json"))
+    except FileNotFoundError:
+        return False
+
+
+class ArbresHGB:
+    """Classifieur HistGradientBoosting du carnet, exporté en JSON (outils_site/export_kaggle_v7.py) : mêmes arbres,
+    même parcours que scikit-learn (valeur ≤ seuil → gauche, valeur manquante selon l'arbre), même somme brute."""
+    def __init__(self, chemin):
+        m = json.load(open(chemin, encoding="utf-8"))
+        self.base, self.n = float(m["baseline"]), int(m["n_features"])
+        self.arbres = [tuple(list(a) for a in t) for t in m["trees"]]
+
+    def brut(self, X):
+        X = np.atleast_2d(np.asarray(X, np.float64))
+        out = []
+        for f in X.tolist():
+            s = self.base
+            for feat, thr, gauche, droite, feuille, val, manquant in self.arbres:
+                nd = 0
+                while not feuille[nd]:
+                    v = f[feat[nd]]
+                    if v != v:
+                        nd = gauche[nd] if manquant[nd] else droite[nd]
+                    else:
+                        nd = gauche[nd] if v <= thr[nd] else droite[nd]
+                s += val[nd]
+            out.append(s)
+        return np.array(out)
+
+    def predict_proba(self, X):
+        p = 1 / (1 + np.exp(-self.brut(X)))
+        return np.c_[1 - p, p]
+
+
+def image_features_v7(img, lungs):
+    """40 descripteurs de la coupe (features.image_features). Deux cas limites gérés comme l'application web :
+    poumon érodé vide (fenêtre spectrale au centre de l'image) et aucun bloc pulmonaire (un bloc nul)."""
+    try:
+        return np.asarray(FZ.image_features(img, lungs)[0], np.float64)
+    except (ValueError, IndexError):
+        pass
+    R = FZ.residuals(img)
+    body = img > -900
+    feats = []
+    for k in ("med", "srm3", "kv", "dx"):
+        v = R[k][body]
+        feats += [v.std(), kurtosis(v), FZ.skew(v)]
+    feats += list(FZ.ac1(np.where(lungs, R["kv"], 0)))
+    ys, xs = np.where(ndi.binary_erosion(lungs, iterations=4))
+    cy, cx = (int(np.median(ys)), int(np.median(xs))) if len(ys) else (img.shape[0] // 2, img.shape[1] // 2)
+    feats += list(FZ.band_energy(R["kv"][max(cy - 32, 0):cy + 32, max(cx - 32, 0):cx + 32], 6))
+    bf = FZ.block_feats(img, R, FZ.lung_blocks(lungs))
+    if len(bf) == 0:
+        bf = np.zeros((1, 6), np.float32)
+    z = np.abs(FZ.robust_z(bf))
+    feats += list(z.max(0)) + list(np.percentile(z, 95, axis=0)) + list(bf.std(0) / (np.abs(bf.mean(0)) + 1e-6))
+    dup = FZ.duplicate_map(img, body)
+    feats += [dup.mean() * 1000, float(dup.any())]
+    return np.asarray(np.array(feats, np.float32), np.float64)
+
+
+class DetecteurV7(Detecteur):
+    """Détecteur de l'exécution finale du mémoire (version 7 du carnet, 300 patients LIDC-IDRI).
+
+    Toutes les coupes sont écrêtées à [-1024 ; 3071] HU. Branche du bruit (27 descripteurs par patch, 300 arbres),
+    branche CNN, branche diffusion facultative (DDPM défenseur, t* = 150, 3 tirages), fusion locale par régression
+    logistique, puis méta-classifieur HGB sur les 40 descripteurs de la coupe et les agrégats des patchs :
+      - sans diffusion : « bruit + CNN », 52 entrées (AUC 0,879 sur le test interne) ;
+      - avec diffusion : « trois branches », 60 entrées (AUC 0,870).
+    Réseaux en ONNX (modeles/v7), arbres et fusions en JSON (site/modele/v7, partagés avec l'application web).
+    """
+    version = "v7"
+
+    def __init__(self, device=DEVICE):
+        self.device, self.moteur = device, "onnx"
+        self.forensic_clf = ArbresHGB(fichier_v7("hgb_forensique.json"))
+        self.meta2 = ArbresHGB(fichier_v7("hgb_meta2.json"))
+        self.meta = ArbresHGB(fichier_v7("hgb_meta.json"))
+        self.cfg = json.load(open(fichier_v7("fusion.json"), encoding="utf-8"))
+        self.dossier = fichier_v7("cnn.onnx").parent
+        self.seuils = self.cfg.get("seuils", {"tau1": 0.5, "tau2": 0.85})
+        import onnxruntime as ort
+        o = ort.SessionOptions(); o.intra_op_num_threads = int(os.environ.get("DETECTEUR_THREADS", "0"))
+        o.enable_cpu_mem_arena = False; o.enable_mem_pattern = False
+        self._ort = lambda nom: ort.InferenceSession(str(fichier_v7(nom)), o, providers=["CPUExecutionProvider"])
+        self.econome = os.environ.get("DETECTEUR_ECONOME") == "1"
+        self.cnn = self.ddpm = None
+        if not self.econome:
+            self.cnn, self.ddpm = self._ort("cnn.onnx"), self._ort("ddpm.onnx")
+        self._gan = None
+
+    @staticmethod
+    def _logistique(L, X):
+        return 1 / (1 + np.exp(-(X @ np.asarray(L["coef"], np.float64) + float(L["intercept"]))))
+
+    def diffusion_v7(self, X):
+        """Écart robuste de l'erreur de reconstruction du DDPM, comme le carnet (graine 0, 3 tirages d'un bloc)."""
+        d = self.cfg["ddpm"]
+        ab, n = float(d["abar"]), int(d["tirages"])
+        rng = np.random.default_rng(0)
+        x0 = ((np.clip((X - d["win_lo"]) / (d["win_hi"] - d["win_lo"]), 0, 1) * 2 - 1)[:, None]).astype(np.float32)
+        acc = np.zeros(len(X))
+        for _ in range(n):
+            eps = rng.standard_normal(x0.shape).astype(np.float32)
+            xt = (np.sqrt(ab) * x0 + np.sqrt(1 - ab) * eps).astype(np.float32)
+            e = np.concatenate([self._eps(np.ascontiguousarray(xt[b:b + LOT]), np.full(len(xt[b:b + LOT]), int(d["t_star"]), np.int64))
+                                for b in range(0, len(xt), LOT)])
+            acc += (((xt - np.sqrt(1 - ab) * e) / np.sqrt(ab) - x0) ** 2).mean((1, 2, 3))
+        s = acc / n
+        return (s - np.median(s)) / (1.4826 * np.median(np.abs(s - np.median(s))) + 1e-9)
+
+    def analyser(self, img, avec_diffusion=False):
+        img = np.clip(np.asarray(img), HU_MIN, HU_MAX).astype(np.int16)      # écrêtage identique de toutes les coupes
+        memoire("début de l'analyse")
+        lung = lung_mask_slice(img)
+        coords, f = slice_patch_features(img, lung)
+        if not coords:
+            return dict(ok=False, lung=lung, message="Aucun patch pulmonaire exploitable dans cette coupe "
+                                                     "(poumon absent ou trop petit) : la coupe ne peut pas être analysée.")
+        p_for = self.forensic_clf.predict_proba(f)[:, 1]
+        g = np.nan_to_num(image_features_v7(img, lung))
+        memoire("branche du bruit")
+        p_cnn, seg = self.cnn_patch(img, coords)
+        memoire("branche CNN")
+        f2 = self._logistique(self.cfg["loc2"], np.c_[p_for, p_cnn])
+        score2 = float(self.meta2.predict_proba(np.nan_to_num(np.r_[g, agg(f2), agg(p_for), agg(p_cnn)])[None])[0, 1])
+        sz = score3 = None
+        loc = f2
+        if avec_diffusion:
+            X = np.stack([img[y:y + P, x:x + P] for y, x in coords]).astype(np.float32)
+            sz = self.diffusion_v7(X)
+            memoire("branche diffusion")
+            fl = self._logistique(self.cfg["local"], np.c_[p_for, p_cnn, sz, np.abs(sz)])
+            mf = np.nan_to_num(np.r_[g, agg(fl), agg(p_for), agg(p_cnn), agg(sz), agg(np.abs(sz))])
+            score3 = float(self.meta.predict_proba(mf[None])[0, 1])
+            loc = fl
+        liberer()
+        seg_map = np.zeros(img.shape); cnt = np.zeros(img.shape)
+        for (y, x), sgm in zip(coords, seg):
+            seg_map[y:y + P, x:x + P] += sgm; cnt[y:y + P, x:x + P] += 1
+        seg_map = np.where(cnt > 0, seg_map / np.maximum(cnt, 1), 0)
+        return dict(
+            ok=True, lung=lung, n_patchs=len(coords), avec_diffusion=avec_diffusion,
+            score=score3 if avec_diffusion else score2, score_bruit_cnn=score2, score_trois_branches=score3,
+            branches=dict(forensique=top3(p_for), cnn=top3(p_cnn), fusion_locale=top3(loc),
+                          diffusion=top3(np.abs(sz)) if sz is not None else None),
+            p_for=p_for, p_cnn=p_cnn, s_diff=sz, gfeat=g,
+            carte=pixel_map(coords, loc, img.shape), carte_cnn=seg_map, duplication=float(f[:, -1].max()))
 
 
 # ------------------------------------------------------------------ attaques de démonstration (§3)
