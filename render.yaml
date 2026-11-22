@@ -1,4 +1,4 @@
-﻿services:
+services:
   - type: web
     name: detecteur-faux-scans-ct
     runtime: python
@@ -9,6 +9,9 @@
     buildFilter:
       ignoredPaths:
         - site/**
+        - memoire/**
+        - outils_site/**
+        - .github/**
         - README.md
         - vercel.json
         - .vercelignore

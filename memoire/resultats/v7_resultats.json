@@ -1,0 +1,1050 @@
+{
+ "source": "notebooka82f765ce9 version 7 (scriptVersionId 370455232), cellule v5_cell.py ; exécution complète 11 410 s",
+ "NODULES": {
+  "source": {
+   "pylidc": 45
+  },
+  "auth_avec_nodule": 32,
+  "auth": 200,
+  "diam_mm_p10_p50_p90": [
+   6.6,
+   11.6,
+   27.6
+  ]
+ },
+ "CONTROLE": {
+  "colonnes": [
+   "pos",
+   "neg",
+   "scanners",
+   "forensique",
+   "cnn",
+   "diffusion",
+   "hybride",
+   "sans_diffusion",
+   "fusion_moins_forensique",
+   "fusion2_moins_forensique"
+  ],
+  "injGAN_vs_auth_nodule": [
+   44,
+   32,
+   null,
+   0.513,
+   0.484,
+   0.464,
+   0.772,
+   0.796,
+   [
+    0.259,
+    0.104,
+    0.426
+   ],
+   [
+    0.283,
+    0.128,
+    0.443
+   ]
+  ],
+  "injGAN_vs_auth_sans_nodule": [
+   44,
+   168,
+   null,
+   0.714,
+   0.569,
+   0.481,
+   0.864,
+   0.889,
+   [
+    0.151,
+    0.05,
+    0.245
+   ],
+   [
+    0.175,
+    0.069,
+    0.271
+   ]
+  ],
+  "toutes_vs_auth_nodule": [
+   213,
+   32,
+   null,
+   0.597,
+   0.644,
+   0.495,
+   0.823,
+   0.829,
+   [
+    0.226,
+    0.12,
+    0.341
+   ],
+   [
+    0.232,
+    0.135,
+    0.333
+   ]
+  ],
+  "toutes_vs_auth_sans_nodule": [
+   213,
+   168,
+   null,
+   0.761,
+   0.716,
+   0.513,
+   0.879,
+   0.889,
+   [
+    0.118,
+    0.068,
+    0.164
+   ],
+   [
+    0.127,
+    0.077,
+    0.176
+   ]
+  ],
+  "auc_nodule_parmi_authentiques": {
+   "forensique": 0.65,
+   "cnn": 0.587,
+   "diffusion": 0.516,
+   "hybride": 0.56,
+   "sans_diffusion": 0.573
+  },
+  "ctgan_types": {
+   "FB": 71,
+   "FM": 39,
+   "TM": 35,
+   "TB": 2
+  },
+  "ctgan_FM_vs_TM": [
+   39,
+   35,
+   null,
+   0.711,
+   0.615,
+   0.532,
+   0.729,
+   0.696,
+   [
+    0.018,
+    -0.213,
+    0.251
+   ],
+   [
+    -0.015,
+    -0.249,
+    0.217
+   ]
+  ],
+  "ctgan_FB_vs_TM": [
+   71,
+   35,
+   null,
+   0.84,
+   0.926,
+   0.482,
+   0.811,
+   0.804,
+   [
+    -0.029,
+    -0.19,
+    0.136
+   ],
+   [
+    -0.036,
+    -0.195,
+    0.127
+   ]
+  ],
+  "ctgan_sans_patients_trv": [
+   95,
+   28,
+   67,
+   0.761,
+   0.791,
+   0.517,
+   0.773,
+   0.756,
+   [
+    0.012,
+    -0.188,
+    0.204
+   ],
+   null
+  ],
+  "ctgan_FM_vs_TM_sans_patients_trv": [
+   30,
+   26,
+   37,
+   0.627,
+   0.481,
+   0.547,
+   0.682,
+   0.653,
+   [
+    0.055,
+    -0.234,
+    0.33
+   ],
+   null
+  ]
+ },
+ "SEUILS": {
+  "forensique": {
+   "seuil": 0.986,
+   "tpr": 0.211,
+   "fpr": 0.02,
+   "n_val_auth": 180
+  },
+  "cnn": {
+   "seuil": 0.974,
+   "tpr": 0.225,
+   "fpr": 0,
+   "n_val_auth": 180
+  },
+  "diffusion": {
+   "seuil": 5.26,
+   "tpr": 0.009,
+   "fpr": 0.01,
+   "n_val_auth": 180
+  },
+  "hybride": {
+   "seuil": 0.999,
+   "tpr": 0.347,
+   "fpr": 0,
+   "n_val_auth": 180
+  },
+  "sans_diffusion": {
+   "seuil": 0.999,
+   "tpr": 0.366,
+   "fpr": 0,
+   "n_val_auth": 180
+  },
+  "auc_val_hors_pli": {
+   "forensique": 0.674,
+   "cnn": 0.667,
+   "diffusion": 0.503,
+   "hybride": 0.847,
+   "sans_diffusion": 0.849
+  }
+ },
+ "DECOMPOSITION": {
+  "n_test": 413,
+  "falsifiees": 213,
+  "patients": 45,
+  "auc": {
+   "intensite_RF": [
+    0.482,
+    0.431,
+    0.538
+   ],
+   "bruit_seul_RL": [
+    0.79,
+    0.725,
+    0.853
+   ],
+   "duplication_seule_RL": [
+    0.577,
+    0.554,
+    0.602
+   ],
+   "forensique_globale_RL": [
+    0.829,
+    0.765,
+    0.89
+   ],
+   "forensique_globale_HGB": [
+    0.902,
+    0.858,
+    0.939
+   ],
+   "agregation_locale_seule_complets_HGB": [
+    0.735,
+    0.672,
+    0.794
+   ],
+   "globale_plus_locale_bruit_HGB": [
+    0.916,
+    0.875,
+    0.95
+   ],
+   "globale_plus_locale_bruit_intensite_HGB": [
+    0.911,
+    0.872,
+    0.946
+   ],
+   "globale_plus_locale_complets_HGB": [
+    0.917,
+    0.877,
+    0.952
+   ]
+  },
+  "ecart_vs_forensique_RL": {
+   "intensite_RF": [
+    -0.347,
+    -0.422,
+    -0.269
+   ],
+   "bruit_seul_RL": [
+    -0.039,
+    -0.063,
+    -0.019
+   ],
+   "duplication_seule_RL": [
+    -0.252,
+    -0.314,
+    -0.185
+   ],
+   "forensique_globale_HGB": [
+    0.073,
+    0.03,
+    0.119
+   ],
+   "agregation_locale_seule_complets_HGB": [
+    -0.094,
+    -0.152,
+    -0.039
+   ],
+   "globale_plus_locale_bruit_HGB": [
+    0.087,
+    0.04,
+    0.133
+   ],
+   "globale_plus_locale_bruit_intensite_HGB": [
+    0.082,
+    0.036,
+    0.13
+   ],
+   "globale_plus_locale_complets_HGB": [
+    0.088,
+    0.042,
+    0.135
+   ]
+  },
+  "H1_bruit_moins_intensite": [
+   0.309,
+   0.228,
+   0.383
+  ],
+  "H1_bruit_moins_intensite_sans_copier_deplacer": [
+   0.326,
+   0.238,
+   0.402
+  ],
+  "H1_forensique_moins_bruit": [
+   0.039,
+   0.019,
+   0.063
+  ],
+  "H2_classifieur": [
+   0.073,
+   0.03,
+   0.119
+  ],
+  "H2_ajout_agregation": [
+   0.015,
+   0.002,
+   0.03
+  ],
+  "H2_ajout_globaux": [
+   0.182,
+   0.134,
+   0.235
+  ],
+  "H2_intensite_locale": [
+   -0.005,
+   -0.016,
+   0.006
+  ]
+ },
+ "ZHANG": {
+  "info": {
+   "patchs_pos": 72123,
+   "patchs_neg": 273401,
+   "loss": 0.396
+  },
+  "interne": [
+   0.631,
+   0.574,
+   0.686
+  ],
+  "externe": [
+   0.619,
+   0.454,
+   0.769
+  ],
+  "interne_fusion_moins_zhang": [
+   0.239,
+   0.178,
+   0.301
+  ],
+  "interne_forensique_moins_zhang": [
+   0.104,
+   0.053,
+   0.154
+  ],
+  "externe_forensique_moins_zhang": [
+   0.182,
+   -0.001,
+   0.387
+  ],
+  "externe_fusion_moins_zhang": [
+   0.173,
+   -0.042,
+   0.395
+  ],
+  "tpr1_interne": 0.038,
+  "par_attaque": {
+   "bruit": 0.782,
+   "copier_deplacer": 0.466,
+   "diffusion": 0.581,
+   "fgsm": 0.793,
+   "gan_injection": 0.564,
+   "gan_suppression": 0.45
+  },
+  "seuil_validation": {
+   "seuil": 0.599,
+   "tpr": 0.066,
+   "fpr": 0.02,
+   "n_val_auth": 189
+  },
+  "ctgan_FM_vs_TM": 0.466,
+  "externe_sans_patients_trv": 0.577
+ },
+ "TRUFOR": {
+  "interne": [
+   0.491,
+   0.437,
+   0.538
+  ],
+  "externe": [
+   0.553,
+   0.362,
+   0.744
+  ],
+  "ctgan_FM_vs_TM": 0.556,
+  "externe_sans_patients_trv": 0.648,
+  "interne_fusion_moins_trufor": [
+   0.379,
+   0.309,
+   0.451
+  ],
+  "externe_forensique_moins_trufor": [
+   0.249,
+   0.004,
+   0.49
+  ],
+  "tpr1_interne": 0.014,
+  "par_attaque": {
+   "bruit": 0.534,
+   "copier_deplacer": 0.464,
+   "diffusion": 0.402,
+   "fgsm": 0.555,
+   "gan_injection": 0.507,
+   "gan_suppression": 0.508
+  },
+  "fenetre_png": "[-1350 ; 150] HU sur 8 bits, recopiée sur 3 canaux"
+ },
+ "PARTITIONS": {
+  "42": {
+   "test": {
+    "n": 413,
+    "falsifiees": 213,
+    "patients": 45
+   },
+   "interne": {
+    "forensique": [
+     0.735,
+     0.681,
+     0.795
+    ],
+    "cnn": [
+     0.704,
+     0.654,
+     0.753
+    ],
+    "fusion": [
+     0.879,
+     0.831,
+     0.925
+    ]
+   },
+   "externe": {
+    "forensique": [
+     0.801,
+     0.634,
+     0.923
+    ],
+    "cnn": [
+     0.823,
+     0.699,
+     0.924
+    ],
+    "fusion": [
+     0.775,
+     0.661,
+     0.881
+    ]
+   },
+   "interne_fusion_moins_forensique": [
+    0.144,
+    0.092,
+    0.192
+   ],
+   "externe_fusion_moins_forensique": [
+    -0.026,
+    -0.194,
+    0.135
+   ],
+   "tpr1_courbe_test": {
+    "forensique": 0.178,
+    "cnn": 0.254,
+    "fusion": 0.46
+   },
+   "seuil_validation": {
+    "forensique": {
+     "tpr": 0.211,
+     "fpr": 0.02
+    },
+    "cnn": {
+     "tpr": 0.225,
+     "fpr": 0
+    },
+    "fusion": {
+     "tpr": 0.366,
+     "fpr": 0
+    }
+   },
+   "interne_injGAN_fusion_moins_forensique": [
+    0.193,
+    0.084,
+    0.293
+   ],
+   "ctgan_FM_vs_TM": {
+    "forensique": 0.711,
+    "cnn": 0.615,
+    "fusion": 0.696
+   },
+   "ctgan_FM_vs_TM_fusion_moins_forensique": [
+    -0.015,
+    -0.253,
+    0.2
+   ],
+   "externe_sans_patients_trv": {
+    "forensique": 0.761,
+    "cnn": 0.791,
+    "fusion": 0.756
+   },
+   "externe_sans_patients_trv_fusion_moins_forensique": [
+    -0.004,
+    -0.209,
+    0.182
+   ],
+   "interne_injGAN_vs_auth_nodule": {
+    "pos": 44,
+    "neg": 32,
+    "auc": {
+     "forensique": 0.513,
+     "cnn": 0.484,
+     "fusion": 0.796
+    },
+    "fusion_moins_forensique": [
+     0.283,
+     0.124,
+     0.443
+    ]
+   }
+  },
+  "1": {
+   "test": {
+    "n": 404,
+    "falsifiees": 217,
+    "patients": 45
+   },
+   "interne": {
+    "forensique": [
+     0.718,
+     0.652,
+     0.779
+    ],
+    "cnn": [
+     0.684,
+     0.622,
+     0.743
+    ],
+    "fusion": [
+     0.867,
+     0.815,
+     0.911
+    ]
+   },
+   "externe": {
+    "forensique": [
+     0.804,
+     0.633,
+     0.931
+    ],
+    "cnn": [
+     0.783,
+     0.643,
+     0.892
+    ],
+    "fusion": [
+     0.781,
+     0.651,
+     0.882
+    ]
+   },
+   "interne_fusion_moins_forensique": [
+    0.149,
+    0.095,
+    0.202
+   ],
+   "externe_fusion_moins_forensique": [
+    -0.023,
+    -0.151,
+    0.087
+   ],
+   "tpr1_courbe_test": {
+    "forensique": 0.217,
+    "cnn": 0.249,
+    "fusion": 0.442
+   },
+   "seuil_validation": {
+    "forensique": {
+     "tpr": 0.147,
+     "fpr": 0
+    },
+    "cnn": {
+     "tpr": 0.23,
+     "fpr": 0
+    },
+    "fusion": {
+     "tpr": 0.203,
+     "fpr": 0
+    }
+   },
+   "interne_injGAN_fusion_moins_forensique": [
+    0.152,
+    0.044,
+    0.259
+   ],
+   "ctgan_FM_vs_TM": {
+    "forensique": 0.727,
+    "cnn": 0.573,
+    "fusion": 0.671
+   },
+   "ctgan_FM_vs_TM_fusion_moins_forensique": [
+    -0.056,
+    -0.249,
+    0.104
+   ],
+   "externe_sans_patients_trv": {
+    "forensique": 0.762,
+    "cnn": 0.759,
+    "fusion": 0.751
+   },
+   "externe_sans_patients_trv_fusion_moins_forensique": [
+    -0.011,
+    -0.174,
+    0.138
+   ],
+   "interne_injGAN_vs_auth_nodule": {
+    "pos": 44,
+    "neg": 25,
+    "auc": {
+     "forensique": 0.613,
+     "cnn": 0.479,
+     "fusion": 0.779
+    },
+    "fusion_moins_forensique": [
+     0.166,
+     -0.002,
+     0.34
+    ]
+   },
+   "cnn_auc_val_patchs": 0.956,
+   "cnn_epoques": 13,
+   "duree_min": 9.1
+  },
+  "2": {
+   "test": {
+    "n": 404,
+    "falsifiees": 192,
+    "patients": 45
+   },
+   "interne": {
+    "forensique": [
+     0.73,
+     0.679,
+     0.779
+    ],
+    "cnn": [
+     0.7,
+     0.638,
+     0.758
+    ],
+    "fusion": [
+     0.918,
+     0.887,
+     0.944
+    ]
+   },
+   "externe": {
+    "forensique": [
+     0.788,
+     0.612,
+     0.919
+    ],
+    "cnn": [
+     0.798,
+     0.68,
+     0.901
+    ],
+    "fusion": [
+     0.797,
+     0.686,
+     0.889
+    ]
+   },
+   "interne_fusion_moins_forensique": [
+    0.188,
+    0.15,
+    0.227
+   ],
+   "externe_fusion_moins_forensique": [
+    0.008,
+    -0.114,
+    0.141
+   ],
+   "seuil_validation": {
+    "fusion": {
+     "tpr": 0.146,
+     "fpr": 0
+    }
+   },
+   "ctgan_FM_vs_TM_fusion_moins_forensique": [
+    -0.056,
+    -0.25,
+    0.131
+   ],
+   "interne_injGAN_vs_auth_nodule": {
+    "pos": 33,
+    "neg": 23,
+    "auc": {
+     "forensique": 0.567,
+     "cnn": 0.453,
+     "fusion": 0.739
+    },
+    "fusion_moins_forensique": [
+     0.173,
+     -0.04,
+     0.391
+    ]
+   },
+   "cnn_epoques": 23,
+   "duree_min": 15.7
+  },
+  "3": {
+   "test": {
+    "n": 402,
+    "falsifiees": 206,
+    "patients": 45
+   },
+   "interne": {
+    "forensique": [
+     0.757,
+     0.701,
+     0.818
+    ],
+    "cnn": [
+     0.681,
+     0.629,
+     0.74
+    ],
+    "fusion": [
+     0.892,
+     0.849,
+     0.928
+    ]
+   },
+   "externe": {
+    "forensique": [
+     0.803,
+     0.64,
+     0.923
+    ],
+    "cnn": [
+     0.795,
+     0.68,
+     0.897
+    ],
+    "fusion": [
+     0.814,
+     0.687,
+     0.921
+    ]
+   },
+   "interne_fusion_moins_forensique": [
+    0.135,
+    0.09,
+    0.177
+   ],
+   "externe_fusion_moins_forensique": [
+    0.011,
+    -0.102,
+    0.126
+   ],
+   "seuil_validation": {
+    "fusion": {
+     "tpr": 0.5,
+     "fpr": 0
+    }
+   },
+   "ctgan_FM_vs_TM_fusion_moins_forensique": [
+    0.066,
+    -0.079,
+    0.214
+   ],
+   "interne_injGAN_vs_auth_nodule": {
+    "pos": 44,
+    "neg": 31,
+    "auc": {
+     "forensique": 0.762,
+     "cnn": 0.522,
+     "fusion": 0.93
+    },
+    "fusion_moins_forensique": [
+     0.167,
+     0.011,
+     0.332
+    ]
+   },
+   "cnn_epoques": 17,
+   "duree_min": 11.7
+  },
+  "4": {
+   "test": {
+    "n": 404,
+    "falsifiees": 209,
+    "patients": 45
+   },
+   "interne": {
+    "forensique": [
+     0.688,
+     0.63,
+     0.745
+    ],
+    "cnn": [
+     0.651,
+     0.6,
+     0.705
+    ],
+    "fusion": [
+     0.848,
+     0.786,
+     0.903
+    ]
+   },
+   "externe": {
+    "forensique": [
+     0.786,
+     0.63,
+     0.908
+    ],
+    "cnn": [
+     0.792,
+     0.663,
+     0.896
+    ],
+    "fusion": [
+     0.819,
+     0.707,
+     0.912
+    ]
+   },
+   "interne_fusion_moins_forensique": [
+    0.16,
+    0.111,
+    0.199
+   ],
+   "externe_fusion_moins_forensique": [
+    0.034,
+    -0.082,
+    0.16
+   ],
+   "seuil_validation": {
+    "fusion": {
+     "tpr": 0.206,
+     "fpr": 0
+    }
+   },
+   "ctgan_FM_vs_TM_fusion_moins_forensique": [
+    0.053,
+    -0.109,
+    0.213
+   ],
+   "interne_injGAN_vs_auth_nodule": {
+    "pos": 51,
+    "neg": 24,
+    "auc": {
+     "forensique": 0.663,
+     "cnn": 0.486,
+     "fusion": 0.833
+    },
+    "fusion_moins_forensique": [
+     0.171,
+     0.001,
+     0.323
+    ]
+   },
+   "cnn_epoques": 12,
+   "duree_min": 8.5
+  }
+ },
+ "PARTITIONS_RESUME": {
+  "interne": {
+   "forensique": {
+    "moyenne": 0.726,
+    "ecart_type": 0.025,
+    "valeurs": [
+     0.735,
+     0.718,
+     0.73,
+     0.757,
+     0.688
+    ]
+   },
+   "cnn": {
+    "moyenne": 0.684,
+    "ecart_type": 0.021,
+    "valeurs": [
+     0.704,
+     0.684,
+     0.7,
+     0.681,
+     0.651
+    ]
+   },
+   "fusion": {
+    "moyenne": 0.881,
+    "ecart_type": 0.026,
+    "valeurs": [
+     0.879,
+     0.867,
+     0.918,
+     0.892,
+     0.848
+    ]
+   }
+  },
+  "externe": {
+   "forensique": {
+    "moyenne": 0.796,
+    "ecart_type": 0.009,
+    "valeurs": [
+     0.801,
+     0.804,
+     0.788,
+     0.803,
+     0.786
+    ]
+   },
+   "cnn": {
+    "moyenne": 0.798,
+    "ecart_type": 0.015,
+    "valeurs": [
+     0.823,
+     0.783,
+     0.798,
+     0.795,
+     0.792
+    ]
+   },
+   "fusion": {
+    "moyenne": 0.797,
+    "ecart_type": 0.019,
+    "valeurs": [
+     0.775,
+     0.781,
+     0.797,
+     0.814,
+     0.819
+    ]
+   }
+  },
+  "ecart_interne": [
+   [
+    0.144,
+    0.092,
+    0.192
+   ],
+   [
+    0.149,
+    0.095,
+    0.202
+   ],
+   [
+    0.188,
+    0.15,
+    0.227
+   ],
+   [
+    0.135,
+    0.09,
+    0.177
+   ],
+   [
+    0.16,
+    0.111,
+    0.199
+   ]
+  ],
+  "ecart_externe": [
+   [
+    -0.026,
+    -0.194,
+    0.135
+   ],
+   [
+    -0.023,
+    -0.151,
+    0.087
+   ],
+   [
+    0.008,
+    -0.114,
+    0.141
+   ],
+   [
+    0.011,
+    -0.102,
+    0.126
+   ],
+   [
+    0.034,
+    -0.082,
+    0.16
+   ]
+  ],
+  "graines": [
+   42,
+   1,
+   2,
+   3,
+   4
+  ]
+ },
+ "CTGAN_scanners_communs_trv": {
+  "note": "AUC calculées à partir du bloc SCORES_EXTERNE du journal v7, sur les coupes des 17 scanners de CT-GAN issus de patients d'entraînement ou de validation",
+  "coupes": 24,
+  "falsifiees": 15,
+  "scanners": 17,
+  "forensique": 0.97,
+  "cnn": 0.985,
+  "hybride": 0.874,
+  "sans_diffusion": 0.852
+ }
+}

@@ -1,0 +1,9 @@
+Intensité seule (RF) [0.555, 0.524, 0.585] 0.555 [-0.215, -0.247, -0.183]
+Bruit seul, sans duplication (RL) [0.734, 0.711, 0.758] 0.735 [-0.036, -0.047, -0.024]
+Duplication seule (RL) [0.6, 0.598, 0.6] 0.598 [-0.17, -0.192, -0.149]
+Forensique globale (RL) [0.77, 0.749, 0.792] 0.772 None
+Forensique globale (HGB) [0.738, 0.715, 0.762] 0.739 [-0.032, -0.058, -0.006]
+Globale + agrégation locale, blocs bruit (HGB) [0.819, 0.796, 0.841] 0.819 [0.049, 0.022, 0.073]
+Globale + agrégation locale, blocs bruit + intensité (HGB) [0.918, 0.904, 0.932] 0.918 [0.148, 0.124, 0.172]
+Agrégation locale seule, blocs complets (HGB) [0.823, 0.801, 0.844] 0.822 [0.053, 0.024, 0.083]
+Globale + agrégation locale, blocs complets (HGB) [0.911, 0.897, 0.925] 0.91 [0.141, 0.118, 0.165]

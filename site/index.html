@@ -3,41 +3,299 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Détection de faux scans CT</title>
-<meta name="description" content="Démonstrateur du mémoire de Master Recherche SDIA (ENSPD) de MENDOUA Vinny Jordan : détection automatique de faux scans CT par une approche hybride forensique et apprentissage profond.">
-<style>
-  :root { --fond: #f4f6fb; --texte: #14213d; --doux: #4a5878; --accent: #1f5fbf; --bord: #d8deea; }
-  @media (prefers-color-scheme: dark) {
-    :root { --fond: #0f1525; --texte: #e8edf7; --doux: #a8b3cc; --accent: #6ea2ff; --bord: #2a3550; }
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; background: var(--fond); color: var(--texte);
-               font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  body { display: flex; flex-direction: column; }
-  header { padding: 10px 16px; border-bottom: 1px solid var(--bord); display: flex; flex-wrap: wrap;
-           align-items: baseline; gap: 4px 16px; }
-  header h1 { font-size: 1.05rem; margin: 0; }
-  header p { margin: 0; font-size: .85rem; color: var(--doux); }
-  header a { color: var(--accent); }
-  main { flex: 1; position: relative; }
-  iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: var(--fond); }
-  #attente { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-             text-align: center; padding: 16px; color: var(--doux); font-size: .95rem; pointer-events: none; }
-</style>
+<title>Le bruit du scanner trahit l'image falsifiée — détection de faux scans CT</title>
+<meta name="description" content="Application du mémoire de Master de Vinny Jordan Mendoua (ENSPD, Université de Douala) : détecter et localiser les falsifications d'une coupe de scanner thoracique par l'analyse du bruit, directement dans le navigateur.">
+<meta name="theme-color" content="#E6ECEF">
+<link rel="icon" href="img/icone.svg" type="image/svg+xml">
+<link rel="preload" href="polices/InterDisplay-SemiBold.woff" as="font" type="font/woff" crossorigin>
+<link rel="preload" href="polices/Inter-Regular.woff" as="font" type="font/woff" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+<script type="module" src="js/app.js"></script>
 </head>
 <body>
-<header>
-  <h1>Détection automatique de faux scans CT</h1>
-  <p>Mémoire de Master Recherche SDIA (ENSPD) — MENDOUA Vinny Jordan ·
-     <a href="https://github.com/Mendouavinny/detecteur-faux-scans-ct" target="_blank" rel="noopener">code source</a> ·
-     <a href="https://detecteur-faux-scans-ct.onrender.com" target="_blank" rel="noopener">ouvrir en plein écran</a></p>
+<a class="evitement" href="#analyser">Aller à l'analyse</a>
+
+<header class="barre">
+  <a class="marque" href="#haut" aria-label="Accueil">
+    <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="11.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="13" cy="13" r="6" fill="currentColor" opacity=".18"/><path d="M13 1.5v23" stroke="currentColor" stroke-width="2"/></svg>
+    <span>Faux scans CT</span>
+  </a>
+  <nav aria-label="Sections">
+    <a href="#probleme">Le problème</a>
+    <a href="#analyser">Analyser</a>
+    <a href="#methode">Méthode</a>
+    <a href="#resultats">Résultats</a>
+    <a href="#code">Code</a>
+  </nav>
+  <a class="lien-github" href="https://github.com/Mendouavinny/detecteur-faux-scans-ct" rel="noopener">GitHub</a>
 </header>
-<main>
-  <div id="attente">Chargement de l’application… Au premier accès après une période d’inactivité, le serveur
-    gratuit redémarre : comptez jusqu’à une minute.</div>
-  <iframe src="https://detecteur-faux-scans-ct.onrender.com/?__theme=system"
-          title="Application de détection de faux scans CT"
-          allow="clipboard-write" onload="document.getElementById('attente').style.display='none'"></iframe>
+
+<main id="haut">
+
+<!-- ============================================================ ACCUEIL -->
+<section class="accueil">
+  <div class="accueil-texte">
+    <h1>Le bruit du scanner trahit l'image falsifiée.</h1>
+    <p class="chapeau">On peut ajouter ou effacer une tumeur dans une coupe de scanner sans qu'un radiologue le voie. Il reste pourtant une trace : le bruit de l'image, que la falsification ne sait pas imiter. Cette application l'analyse dans votre navigateur.</p>
+    <div class="actions">
+      <a class="bouton principal" href="#analyser">Analyser une coupe</a>
+      <a class="bouton" href="#methode">Comprendre la méthode</a>
+    </div>
+    <p class="auteur">Mémoire de Master 2 en science des données et intelligence artificielle<br>Vinny Jordan Mendoua, École nationale supérieure polytechnique de Douala</p>
+  </div>
+
+  <figure class="film film-accueil" id="film-accueil">
+    <div class="volet">
+      <canvas id="accueil-image" width="512" height="512" aria-hidden="true"></canvas>
+      <canvas id="accueil-bruit" width="512" height="512" aria-hidden="true"></canvas>
+      <div class="volet-trait" aria-hidden="true"><span></span></div>
+      <input type="range" min="0" max="100" value="100" id="accueil-curseur" aria-label="Position du volet entre l'image et son bruit">
+      <div class="annot hg">LIDC-IDRI-0085<br>coupe 86</div>
+      <div class="annot hd">nodule injecté<br>poumon droit</div>
+      <div class="annot bg">image<br>F 1500 C −600</div>
+      <div class="annot bd">bruit<br>résidu KV 5×5</div>
+    </div>
+    <figcaption>Faites glisser le volet. À gauche, ce que voit le radiologue. À droite, le bruit de la même coupe : le nodule injecté y apparaît comme un trou, car il n'a pas de bruit.</figcaption>
+  </figure>
+</section>
+
+<!-- ============================================================ PROBLÈME -->
+<section class="bloc probleme" id="probleme">
+  <div class="colonne">
+    <h2>Une coupe peut être modifiée avant d'être lue</h2>
+    <p class="prose">Une coupe de scanner voyage sous forme de fichier DICOM, du scanner jusqu'au système d'archivage de l'hôpital (le PACS), puis jusqu'au poste du radiologue. Quiconque accède à ces fichiers peut en modifier le contenu.</p>
+    <p class="prose">En 2019, Mirsky et ses collègues ont montré avec CT-GAN qu'un réseau génératif injecte une tumeur réaliste ou en efface une. Les radiologues de leur essai ont conclu à un cancer chez <strong>99 %</strong> des patients ayant reçu une fausse tumeur, et à un examen normal chez <strong>94 %</strong> de ceux dont la tumeur avait été effacée.</p>
+  </div>
+  <ol class="chaine" aria-label="Parcours d'une coupe">
+    <li><span>Scanner</span><small>acquisition</small></li>
+    <li><span>Fichier DICOM</span><small>image et métadonnées</small></li>
+    <li class="rompu"><span>PACS</span><small>archivage : une coupe est modifiée</small></li>
+    <li><span>Radiologue</span><small>lecture et diagnostic</small></li>
+  </ol>
+</section>
+
+<!-- ============================================================ LABORATOIRE -->
+<section class="labo" id="analyser" aria-labelledby="titre-labo">
+  <div class="labo-tete">
+    <h2 id="titre-labo">Analyser une coupe</h2>
+    <p>Choisissez une coupe authentique de la base LIDC-IDRI ou ouvrez votre propre fichier DICOM. Vous pouvez ensuite la falsifier pour voir ce que le bruit révèle. Le calcul se fait dans ce navigateur : aucun fichier n'est envoyé.</p>
+  </div>
+
+  <div class="outils">
+    <label class="champ">
+      <span>Coupe</span>
+      <select id="choix-exemple"></select>
+    </label>
+    <label class="bouton fichier">
+      <input type="file" id="fichier" accept=".dcm,application/dicom,*/*">
+      Ouvrir un fichier DICOM
+    </label>
+    <fieldset class="segments" id="attaques">
+      <legend>Falsifier la coupe</legend>
+      <div class="segments-boutons">
+        <label><input type="radio" name="attaque" value="aucune" checked><span>Aucune</span></label>
+        <label><input type="radio" name="attaque" value="nodule"><span>Nodule injecté</span></label>
+        <label><input type="radio" name="attaque" value="copie"><span>Copier-déplacer</span></label>
+        <label><input type="radio" name="attaque" value="bruit"><span>Bruit ajouté</span></label>
+        <label><input type="radio" name="attaque" value="lissage"><span>Lissage</span></label>
+      </div>
+    </fieldset>
+  </div>
+
+  <div class="labo-grille">
+    <div class="poste">
+      <div class="film film-labo" id="film-labo" tabindex="0" aria-describedby="aide-film">
+        <canvas id="labo-canvas" width="512" height="512" role="img" aria-label="Coupe analysée"></canvas>
+        <div class="annot hg" id="annot-hg"></div>
+        <div class="annot hd" id="annot-hd"></div>
+        <div class="annot bg" id="annot-bg"></div>
+        <div class="annot bd" id="annot-bd"></div>
+        <div class="depot" id="depot" hidden>Déposez le fichier DICOM ici</div>
+        <div class="calcul" id="calcul" hidden><span></span></div>
+      </div>
+      <div class="couches" role="tablist" aria-label="Couche affichée">
+        <button role="tab" data-couche="image" aria-selected="true">Image</button>
+        <button role="tab" data-couche="residu" aria-selected="false">Résidu</button>
+        <button role="tab" data-couche="bruit" aria-selected="false">Niveau du bruit</button>
+        <button role="tab" data-couche="proba" aria-selected="false">Patchs suspects</button>
+        <button role="tab" data-couche="copie" aria-selected="false">Copies exactes</button>
+      </div>
+      <p class="aide" id="aide-film"></p>
+      <div class="legende" id="legende"></div>
+    </div>
+
+    <aside class="verdict" aria-live="polite">
+      <p class="verdict-etiquette">Verdict de la branche forensique</p>
+      <p class="verdict-mot" id="verdict-mot">—</p>
+      <div class="jauge" aria-hidden="true">
+        <div class="jauge-piste"><div class="jauge-valeur" id="jauge-valeur"></div><div class="jauge-avant" id="jauge-avant" hidden></div></div>
+        <div class="jauge-seuils"><span style="left:50%">0,5</span><span style="left:85%">0,85</span></div>
+      </div>
+      <p class="verdict-score"><span id="score">—</span> <small>score de la coupe (moyenne des 3 patchs les plus suspects)</small></p>
+      <p class="comparaison" id="comparaison" hidden></p>
+      <dl class="mesures">
+        <div><dt>Patchs analysés</dt><dd id="m-patchs">—</dd></div>
+        <div><dt>Copie exacte</dt><dd id="m-copie">—</dd></div>
+        <div><dt>Durée du calcul</dt><dd id="m-duree">—</dd></div>
+        <div><dt>Empreinte SHA-256</dt><dd id="m-sha" class="sha">—</dd></div>
+      </dl>
+      <details class="note">
+        <summary>Quel modèle tourne ici ?</summary>
+        <p>La branche forensique du détecteur, telle qu'elle est publiée avec l'application : 27 descripteurs du bruit par patch de 64 × 64 pixels, puis un classifieur à gradient boosting de 213 arbres, entraîné sur 120 patients LIDC-IDRI. Le code JavaScript reproduit exactement les probabilités du code Python sur 50 coupes de contrôle.</p>
+        <p>Le détecteur hybride complet (CNN, diffusion et fusion) demande un serveur. Il est dans le dépôt, avec <code>app.py</code>, et <a href="https://detecteur-faux-scans-ct.onrender.com" rel="noopener">en ligne sur un serveur gratuit</a> : le premier accès prend environ une minute.</p>
+        <p>C'est un outil de recherche, pas un dispositif médical. Une alerte invite à vérifier, elle ne prouve rien.</p>
+      </details>
+    </aside>
+  </div>
+</section>
+
+<!-- ============================================================ MÉTHODE -->
+<section class="bloc methode" id="methode">
+  <div class="colonne">
+    <h2>Pourquoi le bruit trahit une falsification</h2>
+    <p class="prose">Le tube du scanner émet des photons dont le nombre détecté est aléatoire. L'image est ensuite calculée par rétroprojection filtrée, avec un noyau de reconstruction. Il en résulte un bruit corrélé dans l'espace, dont la texture dépend du noyau et dont le niveau baisse avec la dose. Une coupe authentique a entièrement traversé cette chaîne. Une région falsifiée vient d'ailleurs et ne porte pas le même bruit :</p>
+    <ul class="traces">
+      <li><b>Un contenu généré</b> (GAN, diffusion) a une anatomie plausible, mais pas la texture de la rétroprojection filtrée.</li>
+      <li><b>Une région collée ou lissée</b> a un bruit atténué, ou incohérent avec la dose et le noyau.</li>
+      <li><b>Un bruit ajouté pour camoufler</b> imite le niveau, pas la texture corrélée.</li>
+      <li><b>Un copier-déplacer</b> duplique le bruit à l'identique, ce qui n'arrive jamais dans une vraie acquisition.</li>
+    </ul>
+  </div>
+
+  <h3 class="sous-titre">Les étapes de l'analyse</h3>
+  <ol class="etapes">
+    <li>
+      <h4>Lire la coupe en unités Hounsfield</h4>
+      <p>Le fichier DICOM d'origine, sans compression ni rééchantillonnage : ils effaceraient le bruit. Un masque délimite les poumons, découpés en patchs de 64 × 64 pixels au pas de 32.</p>
+    </li>
+    <li>
+      <h4>Isoler le bruit</h4>
+      <p>Chaque pixel est prédit à partir de ses voisins, puis la prédiction est soustraite. Il reste un résidu où l'anatomie disparaît. Quatre filtres sont repris de la stéganalyse :</p>
+      <div class="noyaux">
+        <figure><div class="mat m3"><span>−1</span><span>2</span><span>−1</span><span>2</span><span>−4</span><span>2</span><span>−1</span><span>2</span><span>−1</span></div><figcaption>SRM 3 × 3, divisé par 4</figcaption></figure>
+        <figure><div class="mat m5"><span>−1</span><span>2</span><span>−2</span><span>2</span><span>−1</span><span>2</span><span>−6</span><span>8</span><span>−6</span><span>2</span><span>−2</span><span>8</span><span>−12</span><span>8</span><span>−2</span><span>2</span><span>−6</span><span>8</span><span>−6</span><span>2</span><span>−1</span><span>2</span><span>−2</span><span>2</span><span>−1</span></div><figcaption>KV 5 × 5, divisé par 12</figcaption></figure>
+        <figure><div class="formule">x − médiane<sub>3×3</sub>(x)</div><figcaption>Résidu médian</figcaption></figure>
+        <figure><div class="formule">x<sub>i,j+1</sub> − x<sub>i,j</sub></div><figcaption>Différence horizontale</figcaption></figure>
+      </div>
+    </li>
+    <li>
+      <h4>Mesurer le bruit de chaque patch</h4>
+      <p>Son niveau (écart-type robuste σ = 1,4826 × MAD), sa corrélation entre pixels voisins, sa répartition en fréquence sur six anneaux du spectre, la forme de sa distribution (kurtosis) et l'intensité du patch.</p>
+    </li>
+    <li>
+      <h4>Comparer chaque patch au reste de la coupe</h4>
+      <p>La dose et le noyau changent d'un patient à l'autre. Chaque mesure est donc comparée aux autres patchs de la même coupe par un écart robuste, <span class="formule-ligne">z = (f − médiane) / (1,4826 × MAD)</span>. Un patch authentique ressemble à ses voisins ; un patch falsifié s'en écarte.</p>
+    </li>
+    <li>
+      <h4>Chercher les copies exactes</h4>
+      <p>Toutes les fenêtres de 8 × 8 pixels sont comparées. Deux fenêtres identiques, texturées et éloignées de plus de 8 pixels signalent un copier-déplacer : en DICOM sans perte, deux bruits ne coïncident jamais.</p>
+    </li>
+    <li>
+      <h4>Décider</h4>
+      <p>Les 27 descripteurs de chaque patch passent dans le classifieur. Le score de la coupe est la moyenne des trois patchs les plus suspects ; il est comparé à 0,5 (à vérifier) et à 0,85 (alerte).</p>
+    </li>
+  </ol>
+
+  <h3 class="sous-titre">Le détecteur complet du mémoire</h3>
+  <p class="prose colonne">Dans le mémoire, cette branche du bruit est l'une des trois branches d'une architecture hybride. Une fusion « du local au global » combine leurs scores. La branche en bleu nuit est celle qui tourne dans cette page.</p>
+  <div class="archi" role="img" aria-label="Architecture : coupe DICOM, prétraitement, patchs, trois branches (forensique, CNN, diffusion), fusion, décision et carte, module de sécurité">
+    <div class="a-col">
+      <div class="a-boite">Coupe DICOM</div>
+      <div class="a-boite apport">Prétraitement<small>HU, écrêtage identique, masque pulmonaire</small></div>
+      <div class="a-boite apport">Patchs<small>64 × 64, pas de 32</small></div>
+    </div>
+    <div class="a-col branches">
+      <div class="a-boite ici">Branche forensique<small>4 résidus, 27 descripteurs, gradient boosting</small></div>
+      <div class="a-boite">Branche CNN<small>couche de Bayar + SRM, EfficientNet-B0, U-Net (4,27 M paramètres)</small></div>
+      <div class="a-boite">Branche diffusion<small>DDPM appris sur des patchs authentiques, erreur de reconstruction</small></div>
+    </div>
+    <div class="a-col">
+      <div class="a-boite apport">Fusion du local au global<small>scores des patchs + 40 descripteurs de la coupe, méta-classifieur, seuil fixé sur la validation</small></div>
+      <div class="a-boite sortie">Décision et carte de la région</div>
+      <div class="a-boite pointille">Module de sécurité (prototype)<small>empreinte SHA-256, journal chaîné</small></div>
+    </div>
+  </div>
+  <p class="legende-archi"><span class="pastille ici"></span>tourne dans cette page<span class="pastille apport"></span>apport du mémoire</p>
+</section>
+
+<!-- ============================================================ RÉSULTATS -->
+<section class="bloc resultats" id="resultats">
+  <div class="colonne">
+    <h2>Ce que montrent les résultats</h2>
+    <p class="prose">Chiffres de l'exécution finale du mémoire : 300 patients LIDC-IDRI séparés par patient (210 pour l'entraînement, 45 pour la validation, 45 pour le test), sept familles de falsifications, deux jeux externes jamais vus.</p>
+  </div>
+
+  <figure class="barres" aria-labelledby="titre-barres">
+    <figcaption id="titre-barres">AUC sur le test interne (45 patients, 413 coupes dont 213 falsifiées). En hachuré, les méthodes d'autres auteurs, évaluées sur les mêmes données.</figcaption>
+    <div class="barres-zone">
+      <div class="ligne fort"><span class="nom">Fusion des trois branches</span><span class="piste"><span class="hasard-lib">hasard</span><span class="val" style="width:87.0%"></span></span><span class="chiffre">0,870</span></div>
+      <div class="ligne "><span class="nom">Branche forensique (bruit)</span><span class="piste"><span class="val" style="width:73.5%"></span></span><span class="chiffre">0,735</span></div>
+      <div class="ligne "><span class="nom">Branche CNN</span><span class="piste"><span class="val" style="width:70.4%"></span></span><span class="chiffre">0,704</span></div>
+      <div class="ligne autre"><span class="nom">Cascade de Zhang et al. (réimplémentée)</span><span class="piste"><span class="val" style="width:63.1%"></span></span><span class="chiffre">0,631</span></div>
+      <div class="ligne "><span class="nom">Branche diffusion</span><span class="piste"><span class="val" style="width:51.0%"></span></span><span class="chiffre">0,510</span></div>
+      <div class="ligne autre"><span class="nom">TruFor (poids publiés)</span><span class="piste"><span class="val" style="width:49.1%"></span></span><span class="chiffre">0,491</span></div>
+      <div class="ligne axe"><span></span><span class="piste"><span style="left:0">0</span><span style="left:25%">0,25</span><span style="left:50%">0,5</span><span style="left:75%">0,75</span><span style="left:100%">1</span></span><span></span></div>
+    </div>
+  </figure>
+
+  <div class="constats">
+    <div>
+      <h3>Le bruit sépare là où l'intensité échoue</h3>
+      <p>Sur les coupes réelles, les descripteurs du bruit atteignent une AUC de 0,790, contre 0,482 pour l'intensité des pixels, soit +0,309 (IC 95 % : 0,228 à 0,383).</p>
+    </div>
+    <div>
+      <h3>La fusion apporte un gain net</h3>
+      <p>+0,135 d'AUC sur la branche du bruit seule. Au seuil fixé sur la validation, 35 % des coupes falsifiées sont détectées sans aucune fausse alerte. L'avance de la fusion bruit + CNN se retrouve dans les cinq partitions des patients (0,881 ± 0,026).</p>
+    </div>
+    <div>
+      <h3>Ce qui ne généralise pas</h3>
+      <p>Face à des générateurs inconnus, l'avantage disparaît : 0,76 à 0,79 sur CT-GAN, 0,55 à 0,79 sur M3Dsynth. La branche diffusion n'apporte rien (−0,009) et la localisation reste faible (Dice 0,089).</p>
+    </div>
+  </div>
+
+  <div class="encart">
+    <h3>Un résultat trop beau, corrigé</h3>
+    <p>Les premières exécutions donnaient une AUC de 0,946. En contrôlant le prétraitement, j'ai trouvé pourquoi : seules les coupes falsifiées étaient écrêtées à −1024 HU. Ce seul indice, sans regarder l'image, donnait une AUC de 0,829, et le modèle l'avait appris : il gonflait son score de 0,125. Toutes les coupes reçoivent désormais le même écrêtage, et tous les chiffres de cette page viennent de l'exécution corrigée.</p>
+  </div>
+</section>
+
+<!-- ============================================================ CODE -->
+<section class="bloc code" id="code">
+  <div class="colonne">
+    <h2>Le code, pour reproduire</h2>
+    <p class="prose">Tout est public dans le dépôt <a href="https://github.com/Mendouavinny/detecteur-faux-scans-ct" rel="noopener">Mendouavinny/detecteur-faux-scans-ct</a> : le code du mémoire, le détecteur complet et cette page.</p>
+  </div>
+  <div class="depot-grille">
+    <pre class="arbre" aria-label="Contenu du dépôt"><b>detecteur-faux-scans-ct/</b>
+├── <a href="https://github.com/Mendouavinny/detecteur-faux-scans-ct/tree/main/memoire">memoire/</a>      code du mémoire : carnet Kaggle,
+│                 compléments, simulateur, résultats
+├── <a href="https://github.com/Mendouavinny/detecteur-faux-scans-ct/tree/main/site">site/</a>         cette application (HTML, CSS, JS)
+├── app.py        détecteur complet avec interface (Gradio)
+├── detecteur.py  les trois branches, la fusion, la sécurité
+├── features.py   descripteurs du bruit
+├── modeles/      classifieurs et fusion entraînés
+└── exemples/     10 coupes LIDC-IDRI de test</pre>
+    <div class="commandes">
+      <h3>Lancer le détecteur complet sur votre ordinateur</h3>
+      <pre><code>git clone https://github.com/Mendouavinny/detecteur-faux-scans-ct
+cd detecteur-faux-scans-ct
+pip install -r requirements-render.txt
+python telecharger_modeles.py
+python app.py</code></pre>
+      <p>Python 3.11 ou plus récent ; le calcul se fait sur processeur, sans carte graphique. Le même détecteur est aussi <a href="https://detecteur-faux-scans-ct.onrender.com" rel="noopener">en ligne</a>, sur un serveur gratuit qui met environ une minute à se réveiller.</p>
+    </div>
+  </div>
+</section>
 </main>
+
+<footer class="pied">
+  <div class="pied-logos">
+    <img src="img/logo_ud.png" alt="Université de Douala" width="56" height="56" loading="lazy">
+    <img src="img/logo_enspd.png" alt="ENSPD" width="56" height="56" loading="lazy">
+  </div>
+  <p>Vinny Jordan Mendoua, mémoire de Master 2 en science des données et intelligence artificielle, École nationale supérieure polytechnique de Douala.</p>
+  <p>Coupes : base LIDC-IDRI (The Cancer Imaging Archive), licence CC BY 3.0. Armato et al., <i>Medical Physics</i> 38(2), 2011.</p>
+  <p>Outil de recherche, sans validation clinique. N'utilisez pas son verdict pour un diagnostic.</p>
+</footer>
 </body>
 </html>

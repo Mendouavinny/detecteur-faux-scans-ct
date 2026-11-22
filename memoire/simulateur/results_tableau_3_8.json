@@ -1,0 +1,187 @@
+[
+ {
+  "config": "Intensité seule (RF)",
+  "auc": [
+   0.555,
+   0.524,
+   0.585
+  ],
+  "moyenne_plis": 0.555,
+  "ecart_vs_RL": [
+   -0.215,
+   -0.247,
+   -0.183
+  ],
+  "par_famille": {
+   "injection": 0.561,
+   "suppression": 0.565,
+   "copier-déplacer": 0.46,
+   "bruit": 0.567,
+   "génératif": 0.621
+  }
+ },
+ {
+  "config": "Bruit seul, sans duplication (RL)",
+  "auc": [
+   0.734,
+   0.711,
+   0.758
+  ],
+  "moyenne_plis": 0.735,
+  "ecart_vs_RL": [
+   -0.036,
+   -0.047,
+   -0.024
+  ],
+  "par_famille": {
+   "injection": 0.655,
+   "suppression": 0.499,
+   "copier-déplacer": 0.809,
+   "bruit": 0.946,
+   "génératif": 0.761
+  }
+ },
+ {
+  "config": "Duplication seule (RL)",
+  "auc": [
+   0.6,
+   0.598,
+   0.6
+  ],
+  "moyenne_plis": 0.598,
+  "ecart_vs_RL": [
+   -0.17,
+   -0.192,
+   -0.149
+  ],
+  "par_famille": {
+   "injection": 0.5,
+   "suppression": 0.5,
+   "copier-déplacer": 1.0,
+   "bruit": 0.5,
+   "génératif": 0.498
+  }
+ },
+ {
+  "config": "Forensique globale (RL)",
+  "auc": [
+   0.77,
+   0.749,
+   0.792
+  ],
+  "moyenne_plis": 0.772,
+  "ecart_vs_RL": null,
+  "par_famille": {
+   "injection": 0.653,
+   "suppression": 0.487,
+   "copier-déplacer": 1.0,
+   "bruit": 0.941,
+   "génératif": 0.768
+  }
+ },
+ {
+  "config": "Forensique globale (HGB)",
+  "auc": [
+   0.738,
+   0.715,
+   0.762
+  ],
+  "moyenne_plis": 0.739,
+  "ecart_vs_RL": [
+   -0.032,
+   -0.058,
+   -0.006
+  ],
+  "par_famille": {
+   "injection": 0.604,
+   "suppression": 0.492,
+   "copier-déplacer": 1.0,
+   "bruit": 0.934,
+   "génératif": 0.661
+  }
+ },
+ {
+  "config": "Globale + agrégation locale, blocs bruit (HGB)",
+  "auc": [
+   0.819,
+   0.796,
+   0.841
+  ],
+  "moyenne_plis": 0.819,
+  "ecart_vs_RL": [
+   0.049,
+   0.022,
+   0.073
+  ],
+  "par_famille": {
+   "injection": 0.741,
+   "suppression": 0.552,
+   "copier-déplacer": 0.999,
+   "bruit": 0.935,
+   "génératif": 0.867
+  }
+ },
+ {
+  "config": "Globale + agrégation locale, blocs bruit + intensité (HGB)",
+  "auc": [
+   0.918,
+   0.904,
+   0.932
+  ],
+  "moyenne_plis": 0.918,
+  "ecart_vs_RL": [
+   0.148,
+   0.124,
+   0.172
+  ],
+  "par_famille": {
+   "injection": 0.892,
+   "suppression": 0.801,
+   "copier-déplacer": 0.995,
+   "bruit": 0.937,
+   "génératif": 0.967
+  }
+ },
+ {
+  "config": "Agrégation locale seule, blocs complets (HGB)",
+  "auc": [
+   0.823,
+   0.801,
+   0.844
+  ],
+  "moyenne_plis": 0.822,
+  "ecart_vs_RL": [
+   0.053,
+   0.024,
+   0.083
+  ],
+  "par_famille": {
+   "injection": 0.856,
+   "suppression": 0.775,
+   "copier-déplacer": 0.997,
+   "bruit": 0.527,
+   "génératif": 0.96
+  }
+ },
+ {
+  "config": "Globale + agrégation locale, blocs complets (HGB)",
+  "auc": [
+   0.911,
+   0.897,
+   0.925
+  ],
+  "moyenne_plis": 0.91,
+  "ecart_vs_RL": [
+   0.141,
+   0.118,
+   0.165
+  ],
+  "par_famille": {
+   "injection": 0.872,
+   "suppression": 0.793,
+   "copier-déplacer": 0.997,
+   "bruit": 0.923,
+   "génératif": 0.971
+  }
+ }
+]

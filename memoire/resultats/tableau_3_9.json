@@ -1,0 +1,86 @@
+[
+ {
+  "test": "Interne, toutes familles",
+  "pos": 213,
+  "neg": 200,
+  "groupes": 45,
+  "unite": "patients",
+  "auc_for": 0.733,
+  "auc_fus": 0.944,
+  "ecart": [
+   0.211,
+   0.146,
+   0.271
+  ]
+ },
+ {
+  "test": "Interne, injection par GAN",
+  "pos": 44,
+  "neg": 200,
+  "groupes": 45,
+  "unite": "patients",
+  "auc_for": 0.676,
+  "auc_fus": 0.926,
+  "ecart": [
+   0.25,
+   0.137,
+   0.346
+  ]
+ },
+ {
+  "test": "CT-GAN, injections et suppressions",
+  "pos": 110,
+  "neg": 37,
+  "groupes": 84,
+  "unite": "scanners",
+  "auc_for": 0.812,
+  "auc_fus": 0.621,
+  "ecart": [
+   -0.191,
+   -0.376,
+   -0.022
+  ]
+ },
+ {
+  "test": "CT-GAN, injections (FM)",
+  "pos": 39,
+  "neg": 37,
+  "groupes": 51,
+  "unite": "scanners",
+  "auc_for": 0.732,
+  "auc_fus": 0.443,
+  "ecart": [
+   -0.289,
+   -0.516,
+   -0.075
+  ]
+ },
+ {
+  "test": "CT-GAN, suppressions (FB)",
+  "pos": 71,
+  "neg": 37,
+  "groupes": 50,
+  "unite": "scanners",
+  "auc_for": 0.855,
+  "auc_fus": 0.718,
+  "ecart": [
+   -0.137,
+   -0.316,
+   0.028
+  ]
+ },
+ {
+  "test": "CT-GAN sans les scanners candidats d'entraînement ou de validation",
+  "pos": 87,
+  "neg": 29,
+  "groupes": 62,
+  "unite": "scanners",
+  "auc_for": 0.784,
+  "auc_fus": 0.566,
+  "ecart": [
+   -0.218,
+   -0.453,
+   -0.007
+  ]
+ }
+]

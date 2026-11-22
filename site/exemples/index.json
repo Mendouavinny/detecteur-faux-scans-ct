@@ -1,0 +1,92 @@
+[
+ {
+  "fichier": "LIDC-IDRI-0139_coupe031.dcm",
+  "patient": "LIDC-IDRI-0139",
+  "coupe": 31,
+  "nodules": 1,
+  "score": 0.018,
+  "fabricant": "GE MEDICAL SYSTEMS",
+  "noyau": "STANDARD"
+ },
+ {
+  "fichier": "LIDC-IDRI-0085_coupe086.dcm",
+  "patient": "LIDC-IDRI-0085",
+  "coupe": 86,
+  "nodules": 0,
+  "score": 0.05,
+  "fabricant": "GE MEDICAL SYSTEMS",
+  "noyau": "STANDARD"
+ },
+ {
+  "fichier": "LIDC-IDRI-0167_coupe053.dcm",
+  "patient": "LIDC-IDRI-0167",
+  "coupe": 53,
+  "nodules": 0,
+  "score": 0.065,
+  "fabricant": "GE MEDICAL SYSTEMS",
+  "noyau": "STANDARD"
+ },
+ {
+  "fichier": "LIDC-IDRI-0340_coupe035.dcm",
+  "patient": "LIDC-IDRI-0340",
+  "coupe": 35,
+  "nodules": 0,
+  "score": 0.225,
+  "fabricant": "GE MEDICAL SYSTEMS",
+  "noyau": "STANDARD"
+ },
+ {
+  "fichier": "LIDC-IDRI-0340_coupe060.dcm",
+  "patient": "LIDC-IDRI-0340",
+  "coupe": 60,
+  "nodules": 1,
+  "score": 0.236,
+  "fabricant": "GE MEDICAL SYSTEMS",
+  "noyau": "STANDARD"
+ },
+ {
+  "fichier": "LIDC-IDRI-0345_coupe136.dcm",
+  "patient": "LIDC-IDRI-0345",
+  "coupe": 136,
+  "nodules": 0,
+  "score": 0.74,
+  "fabricant": "SIEMENS",
+  "noyau": "B45f"
+ },
+ {
+  "fichier": "LIDC-IDRI-0184_coupe072.dcm",
+  "patient": "LIDC-IDRI-0184",
+  "coupe": 72,
+  "nodules": 0,
+  "score": 0.865,
+  "fabricant": "GE MEDICAL SYSTEMS",
+  "noyau": "LUNG"
+ },
+ {
+  "fichier": "LIDC-IDRI-0117_coupe057.dcm",
+  "patient": "LIDC-IDRI-0117",
+  "coupe": 57,
+  "nodules": 0,
+  "score": 0.908,
+  "fabricant": "TOSHIBA",
+  "noyau": "FC01"
+ },
+ {
+  "fichier": "LIDC-IDRI-0126_coupe097.dcm",
+  "patient": "LIDC-IDRI-0126",
+  "coupe": 97,
+  "nodules": 1,
+  "score": 0.982,
+  "fabricant": "GE MEDICAL SYSTEMS",
+  "noyau": "STANDARD"
+ },
+ {
+  "fichier": "LIDC-IDRI-0126_coupe044.dcm",
+  "patient": "LIDC-IDRI-0126",
+  "coupe": 44,
+  "nodules": 0,
+  "score": 0.99,
+  "fabricant": "GE MEDICAL SYSTEMS",
+  "noyau": "STANDARD"
+ }
+]

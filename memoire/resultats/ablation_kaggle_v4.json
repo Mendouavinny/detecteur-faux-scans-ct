@@ -1,0 +1,13 @@
+{"source": "Kaggle notebooka82f765ce9, version 4 (scriptVersionId 370256032), 2026-11-16, 7359.7 s, GPU T4 x2",
+ "interne": {"n": 413, "patients": 45, "falsifiees": 213,
+   "forensique": {"auc": 0.7334, "tpr1": 0.1784}, "cnn": {"auc": 0.6927, "tpr1": 0.2676}, "diffusion": {"auc": 0.5197, "tpr1": 0.0282},
+   "hybride": {"auc": 0.9449, "tpr1": 0.5211, "acc": 0.8789, "f1": 0.8864}, "sans_diffusion": {"auc": 0.9456, "tpr1": 0.5915, "acc": 0.8765, "f1": 0.8849}},
+ "boot_interne_hybride_vs_sans_diffusion": {"diff": -0.0007, "lo": -0.0065, "hi": 0.0047, "p_le0": 0.5985, "n_boot": 2000, "n_groupes": 45},
+ "boot_interne_hybride_vs_forensique": {"diff": 0.2115, "lo": 0.1472, "hi": 0.2717, "p_le0": 0.0, "n_boot": 2000, "n_groupes": 45},
+ "boot_interne_sans_diffusion_vs_forensique": {"diff": 0.2122, "lo": 0.1456, "hi": 0.2736, "p_le0": 0.0, "n_boot": 2000, "n_groupes": 45},
+ "auc_par_attaque": {"bruit": [0.977, 0.9767], "copier_deplacer": [0.9599, 0.9676], "diffusion": [0.929, 0.928], "fgsm": [0.9464, 0.9449], "gan_injection": [0.9253, 0.9228], "gan_suppression": [0.8825, 0.9063], "inpainting": [0.895, 0.9]},
+ "externe": {"n": 147, "scanners": 84, "forensique": {"auc": 0.8115, "tpr1": 0.2}, "cnn": {"auc": 0.8057, "tpr1": 0.3306}, "diffusion": {"auc": 0.5322, "tpr1": 0.0182},
+   "hybride": {"auc": 0.6238, "tpr1": 0.0182}, "sans_diffusion": {"auc": 0.6278, "tpr1": 0.0306}},
+ "boot_externe_hybride_vs_sans_diffusion": {"diff": -0.0039, "lo": -0.0292, "hi": 0.0232, "p_le0": 0.618, "n_boot": 2000, "n_groupes": 84},
+ "boot_externe_forensique_vs_hybride": {"diff": 0.1877, "lo": 0.0218, "hi": 0.3736, "p_le0": 0.0145, "n_boot": 2000, "n_groupes": 84},
+ "duree_entrainement_ddpm_defenseur_s": 395, "duree_entrainement_deux_ddpm_s": 812}

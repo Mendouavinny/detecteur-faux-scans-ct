@@ -1,0 +1,146 @@
+{
+ "repartition_types": {
+  "I": 39,
+  "S": 71,
+  "m": 35,
+  "b": 2
+ },
+ "scanners_externes": 84,
+ "empreinte_unique_entrainement_ou_validation": [
+  "1201",
+  "1871",
+  "1937",
+  "2031",
+  "2508",
+  "2590",
+  "2703",
+  "3246",
+  "4632",
+  "7794",
+  "8972"
+ ],
+ "empreinte_unique_test": [
+  "2819",
+  "3304"
+ ],
+ "candidat_entrainement_ou_validation": [
+  "1009",
+  "1201",
+  "1280",
+  "1871",
+  "1937",
+  "2031",
+  "2265",
+  "2494",
+  "2508",
+  "2590",
+  "2628",
+  "2703",
+  "3099",
+  "3246",
+  "3378",
+  "4364",
+  "4632",
+  "5614",
+  "6219",
+  "7668",
+  "7794",
+  "8972"
+ ],
+ "externe_tout": {
+  "n": 147,
+  "n_pos": 110,
+  "scanners": 84,
+  "auc": {
+   "forensique": 0.812,
+   "cnn": 0.806,
+   "hybride": 0.621,
+   "sans_diffusion": 0.622
+  },
+  "forensique_moins_fusion": [
+   0.191,
+   0.022,
+   0.376
+  ]
+ },
+ "externe_injections_FM": {
+  "n": 76,
+  "n_pos": 39,
+  "scanners": 51,
+  "auc": {
+   "forensique": 0.732,
+   "cnn": 0.599,
+   "hybride": 0.443,
+   "sans_diffusion": 0.444
+  },
+  "forensique_moins_fusion": [
+   0.289,
+   0.075,
+   0.516
+  ]
+ },
+ "externe_suppressions_FB": {
+  "n": 108,
+  "n_pos": 71,
+  "scanners": 50,
+  "auc": {
+   "forensique": 0.855,
+   "cnn": 0.919,
+   "hybride": 0.718,
+   "sans_diffusion": 0.719
+  },
+  "forensique_moins_fusion": [
+   0.137,
+   -0.028,
+   0.316
+  ]
+ },
+ "externe_sans_empreinte_unique_entrainement_validation": {
+  "n": 130,
+  "n_pos": 100,
+  "scanners": 73,
+  "auc": {
+   "forensique": 0.773,
+   "cnn": 0.792,
+   "hybride": 0.57,
+   "sans_diffusion": 0.571
+  },
+  "forensique_moins_fusion": [
+   0.203,
+   0.019,
+   0.415
+  ]
+ },
+ "externe_sans_aucun_candidat_entrainement_validation": {
+  "n": 116,
+  "n_pos": 87,
+  "scanners": 62,
+  "auc": {
+   "forensique": 0.784,
+   "cnn": 0.777,
+   "hybride": 0.566,
+   "sans_diffusion": 0.563
+  },
+  "forensique_moins_fusion": [
+   0.218,
+   0.007,
+   0.453
+  ]
+ },
+ "externe_injections_sans_candidat": {
+  "n": 58,
+  "n_pos": 29,
+  "scanners": 38,
+  "auc": {
+   "forensique": 0.668,
+   "cnn": 0.501,
+   "hybride": 0.395,
+   "sans_diffusion": 0.391
+  },
+  "forensique_moins_fusion": [
+   0.273,
+   0.003,
+   0.56
+  ]
+ }
+}

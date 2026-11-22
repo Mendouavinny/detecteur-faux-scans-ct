@@ -1,0 +1,146 @@
+{
+ "auc": {
+  "forensique_LR": 0.77,
+  "local_bruit": 0.648,
+  "global+local_bruit": 0.819,
+  "local_bruit+duplication": 0.736,
+  "global+local_bruit+duplication": 0.822,
+  "local_bruit+intensite": 0.729,
+  "global+local_bruit+intensite": 0.918,
+  "local_complet": 0.823,
+  "global+local_complet": 0.911,
+  "local_intensite_seule": 0.667,
+  "global+local_intensite_seule": 0.867
+ },
+ "diff_vs_global_LR": {
+  "local_bruit": [
+   -0.122,
+   -0.152,
+   -0.093
+  ],
+  "global+local_bruit": [
+   0.049,
+   0.022,
+   0.073
+  ],
+  "local_bruit+duplication": [
+   -0.034,
+   -0.06,
+   -0.007
+  ],
+  "global+local_bruit+duplication": [
+   0.053,
+   0.027,
+   0.076
+  ],
+  "local_bruit+intensite": [
+   -0.04,
+   -0.071,
+   -0.009
+  ],
+  "global+local_bruit+intensite": [
+   0.148,
+   0.124,
+   0.172
+  ],
+  "local_complet": [
+   0.053,
+   0.024,
+   0.083
+  ],
+  "global+local_complet": [
+   0.141,
+   0.118,
+   0.165
+  ],
+  "local_intensite_seule": [
+   -0.103,
+   -0.138,
+   -0.068
+  ],
+  "global+local_intensite_seule": [
+   0.098,
+   0.077,
+   0.117
+  ]
+ },
+ "par_famille": {
+  "forensique_LR": {
+   "injection": 0.653,
+   "suppression": 0.487,
+   "copier-déplacer": 1.0,
+   "bruit": 0.941,
+   "génératif": 0.768
+  },
+  "local_bruit": {
+   "injection": 0.706,
+   "suppression": 0.498,
+   "copier-déplacer": 0.612,
+   "bruit": 0.598,
+   "génératif": 0.824
+  },
+  "global+local_bruit": {
+   "injection": 0.741,
+   "suppression": 0.552,
+   "copier-déplacer": 0.999,
+   "bruit": 0.935,
+   "génératif": 0.867
+  },
+  "local_bruit+duplication": {
+   "injection": 0.705,
+   "suppression": 0.561,
+   "copier-déplacer": 1.0,
+   "bruit": 0.565,
+   "génératif": 0.849
+  },
+  "global+local_bruit+duplication": {
+   "injection": 0.755,
+   "suppression": 0.572,
+   "copier-déplacer": 0.997,
+   "bruit": 0.927,
+   "génératif": 0.86
+  },
+  "local_bruit+intensite": {
+   "injection": 0.824,
+   "suppression": 0.737,
+   "copier-déplacer": 0.653,
+   "bruit": 0.481,
+   "génératif": 0.953
+  },
+  "global+local_bruit+intensite": {
+   "injection": 0.892,
+   "suppression": 0.801,
+   "copier-déplacer": 0.995,
+   "bruit": 0.937,
+   "génératif": 0.967
+  },
+  "local_complet": {
+   "injection": 0.856,
+   "suppression": 0.775,
+   "copier-déplacer": 0.997,
+   "bruit": 0.527,
+   "génératif": 0.96
+  },
+  "global+local_complet": {
+   "injection": 0.872,
+   "suppression": 0.793,
+   "copier-déplacer": 0.997,
+   "bruit": 0.923,
+   "génératif": 0.971
+  },
+  "local_intensite_seule": {
+   "injection": 0.707,
+   "suppression": 0.792,
+   "copier-déplacer": 0.548,
+   "bruit": 0.554,
+   "génératif": 0.733
+  },
+  "global+local_intensite_seule": {
+   "injection": 0.765,
+   "suppression": 0.841,
+   "copier-déplacer": 0.999,
+   "bruit": 0.928,
+   "génératif": 0.804
+  }
+ }
+}

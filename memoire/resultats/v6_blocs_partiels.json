@@ -1,0 +1,48 @@
+{
+ "source": "notebooka82f765ce9 version 6 (scriptVersionId 370381827), journal lu le 16/11/2026 vers 21 h 50 ; blocs V5_NODULES, V5_CONTROLE, V5_SEUILS, V5_DECOMPOSITION, V5_ZHANG",
+ "NODULES": {"source": {"pylidc": 45}, "auth_avec_nodule": 32, "auth": 200, "diam_mm_p10_p50_p90": [6.6, 11.6, 27.6]},
+ "CONTROLE": {
+  "injGAN_vs_auth_nodule": {"pos": 44, "neg": 32, "auc": {"forensique": 0.492, "cnn": 0.379, "diffusion": 0.474, "hybride": 0.917, "sans_diffusion": 0.92}, "fusion_moins_forensique": [0.425, 0.264, 0.574], "fusion2_moins_forensique": [0.428, 0.258, 0.583]},
+  "injGAN_vs_auth_sans_nodule": {"pos": 44, "neg": 168, "auc": {"forensique": 0.708, "cnn": 0.596, "diffusion": 0.476, "hybride": 0.927, "sans_diffusion": 0.925}, "fusion_moins_forensique": [0.219, 0.101, 0.326], "fusion2_moins_forensique": [0.216, 0.094, 0.323]},
+  "toutes_vs_auth_nodule": {"pos": 213, "neg": 32, "auc": {"forensique": 0.583, "cnn": 0.55, "diffusion": 0.504, "hybride": 0.939, "sans_diffusion": 0.944}, "fusion_moins_forensique": [0.355, 0.234, 0.476], "fusion2_moins_forensique": [0.36, 0.236, 0.484]},
+  "toutes_vs_auth_sans_nodule": {"pos": 213, "neg": 168, "auc": {"forensique": 0.76, "cnn": 0.719, "diffusion": 0.499, "hybride": 0.948, "sans_diffusion": 0.946}, "fusion_moins_forensique": [0.188, 0.127, 0.248], "fusion2_moins_forensique": [0.187, 0.125, 0.247]},
+  "auc_nodule_parmi_authentiques": {"forensique": 0.664, "cnn": 0.708, "diffusion": 0.494, "hybride": 0.544, "sans_diffusion": 0.562},
+  "ctgan_types": {"FB": 71, "FM": 39, "TM": 35, "TB": 2},
+  "ctgan_FM_vs_TM": {"pos": 39, "neg": 35, "auc": {"forensique": 0.738, "cnn": 0.545, "diffusion": 0.496, "hybride": 0.39, "sans_diffusion": 0.423}, "fusion_moins_forensique": [-0.347, -0.565, -0.144], "fusion2_moins_forensique": [-0.315, -0.549, -0.108]},
+  "ctgan_FB_vs_TM": {"pos": 71, "neg": 35, "auc": {"forensique": 0.847, "cnn": 0.906, "diffusion": 0.522, "hybride": 0.692, "sans_diffusion": 0.699}, "fusion_moins_forensique": [-0.156, -0.343, 0.003], "fusion2_moins_forensique": [-0.148, -0.343, 0.012]},
+  "ctgan_sans_patients_trv": {"pos": 95, "neg": 28, "scanners": 67, "auc": {"forensique": 0.773, "cnn": 0.758, "diffusion": 0.538, "hybride": 0.529, "sans_diffusion": 0.539}, "fusion_moins_forensique": [-0.245, -0.463, -0.038]},
+  "ctgan_FM_vs_TM_sans_patients_trv": {"pos": 30, "neg": 26, "scanners": 37, "auc": {"forensique": 0.651, "cnn": 0.428, "diffusion": 0.517, "hybride": 0.308, "sans_diffusion": 0.321}, "fusion_moins_forensique": [-0.344, -0.619, -0.097]}
+ },
+ "SEUILS": {
+  "forensique": {"seuil": 0.98636, "tpr": 0.192, "fpr": 0.015, "n_val_auth": 180},
+  "cnn": {"seuil": 0.99541, "tpr": 0.263, "fpr": 0.005, "n_val_auth": 180},
+  "diffusion": {"seuil": 4.95562, "tpr": 0.019, "fpr": 0.0, "n_val_auth": 180},
+  "hybride": {"seuil": 0.99986, "tpr": 0.404, "fpr": 0.0, "n_val_auth": 180},
+  "sans_diffusion": {"seuil": 0.99941, "tpr": 0.573, "fpr": 0.015, "n_val_auth": 180},
+  "note": "fusion : scores de validation hors pli (5 plis par patient) pour fixer le seuil",
+  "auc_val_hors_pli": {"forensique": 0.679, "cnn": 0.675, "diffusion": 0.487, "hybride": 0.943, "sans_diffusion": 0.948}
+ },
+ "DECOMPOSITION": {
+  "n_test": 413, "falsifiees": 213, "patients": 45,
+  "auc": {"intensite_RF": [0.478, 0.427, 0.534], "bruit_seul_RL": [0.858, 0.801, 0.909], "duplication_seule_RL": [0.577, 0.554, 0.602],
+          "forensique_globale_RL": [0.919, 0.868, 0.961], "forensique_globale_HGB": [0.962, 0.924, 0.99], "agregation_locale_seule_complets_HGB": [0.75, 0.685, 0.813],
+          "globale_plus_locale_bruit_HGB": [0.961, 0.924, 0.988], "globale_plus_locale_bruit_intensite_HGB": [0.957, 0.918, 0.988], "globale_plus_locale_complets_HGB": [0.956, 0.916, 0.988]},
+  "ecart_vs_forensique_RL": {"intensite_RF": [-0.441, -0.509, -0.363], "bruit_seul_RL": [-0.061, -0.089, -0.035], "duplication_seule_RL": [-0.342, -0.39, -0.285],
+          "forensique_globale_HGB": [0.043, 0.019, 0.072], "agregation_locale_seule_complets_HGB": [-0.169, -0.236, -0.102], "globale_plus_locale_bruit_HGB": [0.042, 0.016, 0.072],
+          "globale_plus_locale_bruit_intensite_HGB": [0.038, 0.012, 0.069], "globale_plus_locale_complets_HGB": [0.037, 0.011, 0.068]},
+  "H1_bruit_moins_intensite": [0.38, 0.299, 0.451], "H1_bruit_moins_intensite_sans_copier_deplacer": [0.413, 0.327, 0.485], "H1_forensique_moins_bruit": [0.061, 0.035, 0.089],
+  "H2_classifieur": [0.043, 0.019, 0.072], "H2_ajout_agregation": [-0.006, -0.013, 0.001], "H2_ajout_globaux": [0.206, 0.143, 0.271], "H2_intensite_locale": [-0.003, -0.008, 0.0],
+  "par_attaque_extraits": {"intensite_RF": {"bruit": 0.481, "copier_deplacer": 0.492, "diffusion": 0.434, "fgsm": 0.532, "gan_injection": 0.459, "gan_suppression": 0.6},
+          "bruit_seul_RL": {"bruit": 0.893, "copier_deplacer": 0.705, "diffusion": 0.898, "fgsm": 0.878, "gan_injection": 0.886, "gan_suppression": 0.889},
+          "duplication_seule_RL": {"copier_deplacer": 0.971, "autres": 0.5},
+          "forensique_globale_RL": {"bruit": 0.923, "copier_deplacer": 0.952, "diffusion": 0.92, "fgsm": 0.908, "gan_injection": 0.902, "gan_suppression": 0.89},
+          "forensique_globale_HGB": {"bruit": 0.974, "copier_deplacer": 0.976, "diffusion": 0.966, "fgsm": 0.946, "gan_injection": 0.958, "gan_suppression": 0.873},
+          "agregation_locale_seule_complets_HGB": {"bruit": 0.861, "copier_deplacer": 0.614, "diffusion": 0.705, "fgsm": 0.858, "gan_injection": 0.716, "gan_suppression": 0.712}},
+  "note": "modèles globaux et méta entraînés sur entraînement + validation (255 patients), blocs hors pli ; évaluation sur les 413 coupes du test interne"
+ },
+ "ZHANG": {"info": {"patchs_pos": 72123, "patchs_neg": 273401}, "interne": [0.666, 0.608, 0.721], "externe": [0.671, 0.509, 0.813],
+           "interne_fusion_moins_zhang": [0.28, 0.221, 0.343], "interne_forensique_moins_zhang": [0.065, 0.025, 0.107],
+           "externe_forensique_moins_zhang": [0.144, 0.022, 0.295], "externe_fusion_moins_zhang": [-0.077, -0.29, 0.121], "tpr1_interne": 0.094,
+           "par_attaque": {"bruit": 0.837, "copier_deplacer": 0.461, "diffusion": 0.59, "fgsm": 0.879, "gan_injection": 0.598, "gan_suppression": 0.54},
+           "seuil_validation": {"seuil": 0.72259, "tpr": 0.047, "fpr": 0.005, "n_val_auth": 189}, "ctgan_FM_vs_TM": 0.555, "externe_sans_patients_trv": 0.623}
+}

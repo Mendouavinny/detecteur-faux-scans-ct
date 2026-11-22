@@ -1,0 +1,55 @@
+{
+ "identifies": 25,
+ "entrainement": 15,
+ "validation": 4,
+ "test": 6,
+ "identifies_presents_dans_les_147": 21,
+ "trv_presents": 17,
+ "test_presents": 4,
+ "coupes_trv": 24,
+ "coupes_test": 10,
+ "lignes": [
+  {
+   "test": "CT-GAN sans les scanners de patients d'entraînement ou de validation",
+   "pos": 95,
+   "neg": 28,
+   "groupes": 67,
+   "auc_for": 0.773,
+   "auc_fus": 0.556,
+   "auc_cnn": 0.789,
+   "ecart": [
+    -0.217,
+    -0.453,
+    0.002
+   ]
+  },
+  {
+   "test": "CT-GAN, injections, sans ces scanners",
+   "pos": 30,
+   "neg": 28,
+   "groupes": 39,
+   "auc_for": 0.655,
+   "auc_fus": 0.376,
+   "auc_cnn": 0.521,
+   "ecart": [
+    -0.279,
+    -0.565,
+    -0.022
+   ]
+  },
+  {
+   "test": "CT-GAN, uniquement les scanners de patients d'entraînement ou de validation",
+   "pos": 15,
+   "neg": 9,
+   "groupes": 17,
+   "auc_for": 0.963,
+   "auc_fus": 0.789,
+   "auc_cnn": 0.881,
+   "ecart": [
+    -0.174,
+    -0.38,
+    0.073
+   ]
+  }
+ ]
+}
