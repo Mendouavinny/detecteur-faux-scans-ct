@@ -12,6 +12,7 @@ const ORT_CDN = `https://cdn.jsdelivr.net/npm/onnxruntime-web@${ORT_VERSION}/dis
 const CACHE = "detecteur-reseaux-v7";
 const LOT = 8;                                    // patchs par passage (mémoire et réactivité sur téléphone)
 export const TAILLES = { "cnn.onnx": 17, "ddpm.onnx": 17, "gan.onnx": 17 };   // Mo, pour l'affichage
+const OCTETS = { "cnn.onnx": 17055157, "ddpm.onnx": 17442704, "gan.onnx": 17329867 };   // tailles exactes (progression)
 
 // rend la main au navigateur entre deux lots, sans le ralentissement des minuteries des onglets en arrière-plan
 const pause = () => new Promise((r) => { const c = new MessageChannel(); c.port1.onmessage = () => r(); c.port2.postMessage(0); });
@@ -55,7 +56,8 @@ async function octetsReseau(nom, progres) {
     if (!(r && r.ok)) await new Promise((ok) => setTimeout(ok, 1500));
   }
   if (!r || !r.ok) throw new Error("Téléchargement impossible (" + nom + "). Vérifiez la connexion et relancez.");
-  const total = +r.headers.get("Content-Length") || TAILLES[nom] * 1e6, lecteur = r.body.getReader(), parts = [];
+  const total = OCTETS[nom] || +r.headers.get("Content-Length"),    // Content-Length est compressé (gzip) sur GitHub Pages
+    lecteur = r.body.getReader(), parts = [];
   let recu = 0;
   for (;;) {
     const { done, value } = await lecteur.read();

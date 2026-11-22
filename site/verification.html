@@ -50,8 +50,8 @@ async function go() {
     if (avecDiffusion) { s3 = c.score; s2 = NaN; }
     if (!avecDiffusion) e2.push(Math.abs(s2 - r.meta2)); else e3.push(Math.abs(s3 - r.meta));
     ePf.push(dPf); ePc.push(dPc); eG.push(dG);
-    const f = (v) => (Number.isFinite(v) ? v.toFixed(3) : "–"), g = (v) => (Number.isFinite(v) ? v.toExponential(1) : "–");
-    t.insertAdjacentHTML("beforeend", `<tr><td>${e.patient} / ${e.coupe}</td><td>${a.coords.length}${memeN ? "" : " ≠ " + r.n}</td><td>${g(dPf)}</td><td>${g(dPc)}</td><td>${g(dG)}</td><td>${f(s2)}</td><td>${r.meta2.toFixed(3)}</td><td>${f(s3)}</td><td>${r.meta.toFixed(3)}</td><td>${dt.toFixed(1)} s</td></tr>`);
+    const f = (v) => (Number.isFinite(v) ? v.toFixed(4) : "–"), g = (v) => (Number.isFinite(v) ? v.toExponential(1) : "–");
+    t.insertAdjacentHTML("beforeend", `<tr><td>${e.patient} / ${e.coupe}</td><td>${a.coords.length}${memeN ? "" : " ≠ " + r.n}</td><td>${g(dPf)}</td><td>${g(dPc)}</td><td>${g(dG)}</td><td>${f(s2)}</td><td>${r.meta2.toFixed(4)}</td><td>${f(s3)}</td><td>${r.meta.toFixed(4)}</td><td>${dt.toFixed(1)} s</td></tr>`);
     log(`${e.fichier} n=${a.coords.length}/${r.n} dp_bruit=${g(dPf)} dp_cnn=${g(dPc)} dg=${g(dG)} bruit+cnn=${f(s2)} (py ${r.meta2.toFixed(4)}) trois=${f(s3)} (py ${r.meta.toFixed(4)}) ${dt.toFixed(1)}s`);
   }
   const m = (v) => (v.length ? Math.max(...v.filter(Number.isFinite)) : NaN);
