@@ -26,7 +26,8 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(req.url);
   const memeSite = url.origin === location.origin;
   const ort = url.hostname === "cdn.jsdelivr.net" && url.pathname.includes("onnxruntime-web");
-  if (!memeSite && !ort) return;                       // dépôt des modèles : géré par l'application
+  if (!memeSite && !ort) return;
+  if (memeSite && url.pathname.includes("/modele/v7/morceaux")) return;   // réseaux : cache géré par l'application
   const dynamique = memeSite && (req.mode === "navigate" || /\.(html|js|css|webmanifest)$/.test(url.pathname) || url.pathname.endsWith("/"));
   if (dynamique) {
     e.respondWith(fetch(req).then((r) => {

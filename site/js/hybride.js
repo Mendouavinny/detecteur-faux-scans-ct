@@ -1,7 +1,7 @@
 // Détecteur hybride complet dans le navigateur, avec les modèles de l'exécution finale du mémoire (v7, 300 patients) :
 // branche CNN, branche diffusion (facultative), fusion locale, puis méta-classifieur sur les 40 descripteurs de la coupe
 // et les agrégats des patchs (comme le carnet, cellule v5 et m3d_v7.py). Les réseaux ONNX sont servis par ce site
-// (dossier modele/v7), gardés dans le cache du navigateur et exécutés avec ONNX Runtime Web (WebAssembly).
+// (dossier modele/v7, en morceaux de 4 Mo), gardés dans le cache du navigateur et exécutés avec ONNX Runtime Web (WebAssembly).
 
 import { P, hgbProba } from "./forensique.js";
 import { descripteursCoupe, agg } from "./globaux.js";
@@ -12,7 +12,6 @@ const ORT_CDN = `https://cdn.jsdelivr.net/npm/onnxruntime-web@${ORT_VERSION}/dis
 const CACHE = "detecteur-reseaux-v7";
 const LOT = 8;                                    // patchs par passage (mémoire et réactivité sur téléphone)
 export const TAILLES = { "cnn.onnx": 17, "ddpm.onnx": 17, "gan.onnx": 17 };   // Mo, pour l'affichage
-const OCTETS = { "cnn.onnx": 17055157, "ddpm.onnx": 17442704, "gan.onnx": 17329867 };   // tailles exactes (progression)
 
 // rend la main au navigateur entre deux lots, sans le ralentissement des minuteries des onglets en arrière-plan
 const pause = () => new Promise((r) => { const c = new MessageChannel(); c.port1.onmessage = () => r(); c.port2.postMessage(0); });
@@ -46,28 +45,55 @@ export async function reseauEnCache(nom) {
   try { const c = await caches.open(CACHE); return !!(await c.match(BASE + nom)); } catch { return false; }
 }
 
-async function octetsReseau(nom, progres) {
-  const c = await caches.open(CACHE).catch(() => null);
-  const deja = c && (await c.match(BASE + nom));
-  if (deja) return new Uint8Array(await deja.arrayBuffer());
-  let r;
-  for (let essai = 0; essai < 3 && !(r && r.ok); essai++) {
-    try { r = await fetch(BASE + nom); } catch { r = null; }
-    if (!(r && r.ok)) await new Promise((ok) => setTimeout(ok, 1500));
-  }
-  if (!r || !r.ok) throw new Error("Téléchargement impossible (" + nom + "). Vérifiez la connexion et relancez.");
-  const total = OCTETS[nom] || +r.headers.get("Content-Length"),    // Content-Length est compressé (gzip) sur GitHub Pages
-    lecteur = r.body.getReader(), parts = [];
-  let recu = 0;
+// Un réseau est servi en morceaux de 4 Mo (modele/v7/morceaux.json) : sur une connexion qui coupe, seul le morceau
+// interrompu est retéléchargé, et les morceaux déjà reçus restent en cache même si la page est fermée.
+let manifeste = null;
+const attendre = (ms) => new Promise((ok) => setTimeout(ok, ms));
+const hex = (b) => Array.from(new Uint8Array(b), (x) => x.toString(16).padStart(2, "0")).join("");
+
+async function lireFlux(url, progres) {
+  const r = await fetch(url, { cache: "no-store" });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const lecteur = r.body.getReader(), parts = [];
+  let n = 0;
   for (;;) {
     const { done, value } = await lecteur.read();
     if (done) break;
-    parts.push(value); recu += value.length; progres?.(Math.min(recu, total), total);
+    parts.push(value); n += value.length; progres?.(n);
   }
-  const tout = new Uint8Array(recu);
+  const b = new Uint8Array(n);
   let o = 0;
-  for (const p of parts) { tout.set(p, o); o += p.length; }
-  if (c) await c.put(BASE + nom, new Response(tout, { headers: { "Content-Type": "application/octet-stream" } })).catch(() => {});
+  for (const p of parts) { b.set(p, o); o += p.length; }
+  return b;
+}
+
+async function octetsReseau(nom, progres) {
+  const c = globalThis.caches ? await caches.open(CACHE).catch(() => null) : null;
+  const deja = c && (await c.match(BASE + nom));
+  if (deja) return new Uint8Array(await deja.arrayBuffer());
+  if (!manifeste) manifeste = await fetch(BASE + "morceaux.json").then((r) => { if (!r.ok) throw new Error("Manifeste des réseaux introuvable"); return r.json(); });
+  const m = manifeste[nom], tout = new Uint8Array(m.taille);
+  let recu = 0, o = 0;
+  for (const p of m.morceaux) {
+    const url = BASE + p, enCache = c && (await c.match(url));
+    let b = enCache ? new Uint8Array(await enCache.arrayBuffer()) : null;
+    for (let essai = 0; !b && essai < 6; essai++) {
+      try { b = await lireFlux(url, (n) => progres?.(recu + n, m.taille)); }
+      catch { b = null; await attendre(Math.min(8000, 1000 * 2 ** essai)); }
+    }
+    if (!b) throw new Error("Téléchargement interrompu (" + nom + "). Vérifiez la connexion et relancez : la partie déjà reçue est gardée.");
+    if (c && !enCache) await c.put(url, new Response(b)).catch(() => {});
+    tout.set(b, o); o += b.length; recu += b.length; progres?.(recu, m.taille);
+  }
+  const empreinte = crypto.subtle ? hex(await crypto.subtle.digest("SHA-256", tout)) : m.sha256;
+  if (o !== m.taille || empreinte !== m.sha256) {
+    if (c) for (const p of m.morceaux) await c.delete(BASE + p).catch(() => {});
+    throw new Error("Réseau " + nom + " reçu incomplet ou altéré. Relancez l'analyse pour le retélécharger.");
+  }
+  if (c) {
+    await c.put(BASE + nom, new Response(tout, { headers: { "Content-Type": "application/octet-stream" } })).catch(() => {});
+    for (const p of m.morceaux) await c.delete(BASE + p).catch(() => {});
+  }
   return tout;
 }
 

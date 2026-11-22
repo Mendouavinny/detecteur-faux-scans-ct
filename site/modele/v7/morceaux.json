@@ -1,0 +1,35 @@
+{
+ "cnn.onnx": {
+  "morceaux": [
+   "morceaux/cnn.onnx.part00",
+   "morceaux/cnn.onnx.part01",
+   "morceaux/cnn.onnx.part02",
+   "morceaux/cnn.onnx.part03",
+   "morceaux/cnn.onnx.part04"
+  ],
+  "sha256": "533be4a07bf1772fa93b47c817fbc830b12dd7a72d67e9f97c1afe4a494146a8",
+  "taille": 17055157
+ },
+ "ddpm.onnx": {
+  "morceaux": [
+   "morceaux/ddpm.onnx.part00",
+   "morceaux/ddpm.onnx.part01",
+   "morceaux/ddpm.onnx.part02",
+   "morceaux/ddpm.onnx.part03",
+   "morceaux/ddpm.onnx.part04"
+  ],
+  "sha256": "9bb52cd9f11f9ab9947ddb49e14265619e0e2e698e5abefd0831f2a00444b54f",
+  "taille": 17442704
+ },
+ "gan.onnx": {
+  "morceaux": [
+   "morceaux/gan.onnx.part00",
+   "morceaux/gan.onnx.part01",
+   "morceaux/gan.onnx.part02",
+   "morceaux/gan.onnx.part03",
+   "morceaux/gan.onnx.part04"
+  ],
+  "sha256": "4a51e667200ddf052de73040383b5173494bc3793896dd26b69364c9d09b4c28",
+  "taille": 17329867
+ }
+}

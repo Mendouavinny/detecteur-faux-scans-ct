@@ -22,7 +22,7 @@ On peut ajouter ou effacer une tumeur dans une coupe de scanner sans qu'un radio
 | `app.py` | Interface du détecteur complet (Gradio) |
 | `detecteur.py` | Détecteur hybride : prétraitement, trois branches, fusion, attaques de démonstration, module de sécurité |
 | `features.py` | Descripteurs forensiques du bruit |
-| `modeles/` | Classifieurs et fusion entraînés, résultats de l'exécution |
+| `modeles/` | Classifieurs et fusion entraînés, résultats de l'exécution ; `modeles/v7/` : réseaux ONNX de l'exécution finale (CNN, DDPM, GAN) |
 | `exemples/` | 10 coupes DICOM authentiques de patients du test, jamais vus à l'entraînement |
 | `outils_site/` | Export des modèles pour le site (`export_kaggle_v7.py`, à lancer dans le carnet Kaggle) et contrôles de parité JavaScript / Python |
 | `preparer_exemples.py`, `verifier_fidelite.py` | Préparation et contrôle des exemples (exigent la base LIDC-IDRI en local) |
@@ -62,7 +62,8 @@ Le dossier `site/` ne contient que des fichiers statiques.
 
 - `site/js/forensique.js` reprend en JavaScript la branche forensique de `detecteur.py` et `features.py`. Il reproduit l'arithmétique en simple précision de NumPy et évalue les arbres du classifieur exportés dans `site/modele/v7/hgb_forensique.json`.
 - `site/js/globaux.js` calcule les 40 descripteurs de la coupe (bruit global, anneaux du spectre, blocs, duplication) utilisés par le méta-classifieur.
-- `site/js/hybride.js` exécute le CNN, le DDPM et le générateur GAN avec ONNX Runtime Web (`site/modele/v7/*.onnx`, gardés dans le cache du navigateur), puis la fusion locale et le méta-classifieur de la version 7 : « bruit + CNN » (52 entrées, AUC 0,879) par défaut, « trois branches » (60 entrées, AUC 0,870) avec la diffusion.
+- `site/js/hybride.js` exécute le CNN, le DDPM et le générateur GAN avec ONNX Runtime Web, puis la fusion locale et le méta-classifieur de la version 7 : « bruit + CNN » (52 entrées, AUC 0,879) par défaut, « trois branches » (60 entrées, AUC 0,870) avec la diffusion.
+- Les réseaux sont servis en morceaux de 4 Mo (`site/modele/v7/morceaux/`, vérifiés par SHA-256) : sur une connexion qui coupe, seul le morceau interrompu est retéléchargé. Ils sont ensuite gardés dans le cache du navigateur. Les fichiers ONNX entiers sont dans `modeles/v7/`.
 - Parité avec Python sur les 10 coupes d'exemple (`site/modele/v7/reference.json`, calculé dans le carnet) : probabilités forensiques identiques à 10⁻¹⁶ près, descripteurs de la coupe à 4 × 10⁻⁵ près en relatif, scores des deux méta-classifieurs identiques à partir des mêmes sorties de réseaux. `node outils_site/verifier_v7.mjs` refait ce contrôle ; la page `site/verification.html` le refait dans le navigateur avec les réseaux ONNX.
 - `site/sw.js` et `site/manifest.webmanifest` rendent l'application installable et utilisable hors connexion.
 
