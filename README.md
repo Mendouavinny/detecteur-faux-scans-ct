@@ -7,7 +7,7 @@ On peut ajouter ou effacer une tumeur dans une coupe de scanner sans qu'un radio
 ## Essayer en ligne
 
 - **Application web** : https://mendouavinny.github.io/detecteur-faux-scans-ct/
-  Elle présente le projet et analyse une coupe DICOM avec la branche du bruit du détecteur. Le calcul se fait dans le navigateur : aucun fichier n'est envoyé, et la page ne dépend d'aucun serveur. On peut falsifier une coupe d'exemple (nodule injecté, copier-déplacer, bruit ajouté, lissage) et voir ce que le bruit révèle.
+  Elle fonctionne sur téléphone, tablette et ordinateur, s'installe comme une application et s'ouvre ensuite sans connexion. Elle analyse une coupe DICOM avec la branche du bruit (instantanée) ou avec le détecteur complet (bruit, CNN et fusion, diffusion en option), entièrement dans le navigateur : aucune image n'est envoyée. On peut falsifier une coupe d'exemple, notamment avec le GAN entraîné du mémoire (injection ou suppression de nodule), et chaque analyse est inscrite dans un journal d'audit chaîné.
 - **Détecteur complet** (CNN, diffusion et fusion) : https://detecteur-faux-scans-ct.onrender.com
   Il est hébergé sur l'offre gratuite de Render. Après 15 minutes d'inactivité, le serveur se met en veille : le premier accès prend alors environ une minute, et l'analyse d'une coupe dure de l'ordre d'une minute.
 
@@ -58,7 +58,13 @@ Exécution finale (version 7 du carnet), 300 patients LIDC-IDRI séparés par pa
 
 ## L'application web
 
-Le dossier `site/` ne contient que des fichiers statiques. `site/js/forensique.js` est une reprise en JavaScript de la branche forensique de `detecteur.py` et `features.py`. Il reproduit l'arithmétique en simple précision de NumPy et évalue les 213 arbres du classifieur exportés dans `site/modele/hgb_forensique.json`. Sur les 10 coupes d'exemple et 40 coupes falsifiées, les probabilités des patchs sont identiques à celles de Python, à 10⁻¹⁶ près :
+Le dossier `site/` ne contient que des fichiers statiques.
+
+- `site/js/forensique.js` reprend en JavaScript la branche forensique de `detecteur.py` et `features.py`. Il reproduit l'arithmétique en simple précision de NumPy et évalue les 213 arbres du classifieur exportés dans `site/modele/hgb_forensique.json`. Sur les 10 coupes d'exemple et 40 coupes falsifiées, les probabilités des patchs sont identiques à celles de Python, à 10⁻¹⁶ près.
+- `site/js/hybride.js` exécute le CNN, le DDPM et le générateur GAN avec ONNX Runtime Web, puis la fusion locale et la fusion robuste (`site/modele/fusion.json`). Les réseaux sont lus dans le dépôt Hugging Face, vérifiés par SHA-256 et gardés dans le cache du navigateur. Sur les 10 coupes d'exemple, le score du détecteur complet s'écarte de celui de l'application Python de 0,0007 en moyenne (au plus 0,0025), sans la branche diffusion. Il faut environ 0,5 à 6 s par coupe sur un ordinateur à deux cœurs. La page `site/verification.html` refait cette comparaison.
+- `site/sw.js` et `site/manifest.webmanifest` rendent l'application installable et utilisable hors connexion.
+
+Pour contrôler la branche forensique :
 
 ```bash
 python outils_site/exporter_modele.py   # réexporte le classifieur et calcule les scores Python de référence

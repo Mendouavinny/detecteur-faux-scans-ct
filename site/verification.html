@@ -16,7 +16,7 @@
 <body>
 <h1>Vérification du détecteur complet</h1>
 <p>Cette page analyse les 10 coupes d'exemple avec le détecteur complet exécuté dans ce navigateur, et compare le score à celui du même détecteur en Python (application Gradio). La branche diffusion tire son bruit avec un autre générateur aléatoire que NumPy : de petits écarts sont attendus.</p>
-<p><label><input type="checkbox" id="diff" checked> avec la branche diffusion</label> <button id="go">Lancer</button></p>
+<p><label><input type="checkbox" id="diff"> avec la branche diffusion (beaucoup plus lente)</label> <button id="go">Lancer</button></p>
 <pre id="resultat">En attente.</pre>
 <table><thead><tr><th>Coupe</th><th>Bruit (JS)</th><th>Complet (JS)</th><th>Complet (Python)</th><th>Écart</th><th>Durée</th></tr></thead><tbody id="t"></tbody></table>
 <script type="module">

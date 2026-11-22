@@ -412,9 +412,8 @@ async function laboratoire(model, cfg, exemples) {
   });
 
   // modèle : branche du bruit ou détecteur complet
-  const mobile = matchMedia("(max-width: 700px)").matches;
   etat.mode = stock.lire("mode", "rapide");
-  etat.avecDiffusion = stock.lire("diffusion", !mobile);
+  etat.avecDiffusion = stock.lire("diffusion-v2", false);        // la diffusion multiplie la durée par 20 environ
   $("#avec-diffusion").checked = etat.avecDiffusion;
   document.querySelector(`input[name=mode][value=${etat.mode}]`).checked = true;
   document.querySelector(".modele").classList.toggle("complet", etat.mode === "complet");
@@ -424,7 +423,7 @@ async function laboratoire(model, cfg, exemples) {
     await calculer();
   }));
   $("#avec-diffusion").addEventListener("change", async (e) => {
-    etat.avecDiffusion = e.target.checked; stock.ecrire("diffusion", etat.avecDiffusion);
+    etat.avecDiffusion = e.target.checked; stock.ecrire("diffusion-v2", etat.avecDiffusion);
     if (etat.mode === "complet") await calculer();
   });
   $("#annuler").addEventListener("click", () => {

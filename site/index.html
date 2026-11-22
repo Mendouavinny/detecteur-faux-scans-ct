@@ -112,8 +112,8 @@
 
   <div class="modele" role="radiogroup" aria-label="Modèle utilisé">
     <label class="mode"><input type="radio" name="mode" value="rapide" checked><span><b>Branche du bruit</b><small>instantanée, sans téléchargement</small></span></label>
-    <label class="mode"><input type="radio" name="mode" value="complet"><span><b>Détecteur complet</b><small>bruit, CNN et diffusion, comme dans le mémoire</small></span></label>
-    <label class="option-diffusion"><input type="checkbox" id="avec-diffusion" checked> Inclure la branche diffusion <small>(la plus lente ; son poids dans la fusion est presque nul)</small></label>
+    <label class="mode"><input type="radio" name="mode" value="complet"><span><b>Détecteur complet</b><small>bruit, CNN et fusion, comme dans le mémoire (17 Mo à télécharger une fois)</small></span></label>
+    <label class="option-diffusion"><input type="checkbox" id="avec-diffusion"> Inclure aussi la branche diffusion <small>(environ une minute par coupe sur un ordinateur ordinaire, davantage sur téléphone ; son poids dans la fusion est presque nul, le score change de moins de 0,01)</small></label>
   </div>
 
   <div class="labo-grille">
@@ -171,7 +171,7 @@
       <details class="note">
         <summary>Quels modèles tournent ici ?</summary>
         <p><b>Branche du bruit</b> : 27 descripteurs par patch de 64 × 64 pixels, puis un classifieur de 213 arbres. Le code JavaScript reproduit exactement les probabilités du code Python.</p>
-        <p><b>Détecteur complet</b> : la même branche, plus le CNN (couche de Bayar, SRM, EfficientNet-B0 et U-Net) et le DDPM de la branche diffusion, exécutés avec ONNX Runtime Web. Une fusion locale puis une fusion robuste donnent le score. Les réseaux (34 Mo) sont téléchargés une fois depuis le dépôt de modèles du mémoire, vérifiés par empreinte SHA-256, puis gardés dans le navigateur.</p>
+        <p><b>Détecteur complet</b> : la même branche, plus le CNN (couche de Bayar, SRM, EfficientNet-B0 et U-Net) et, si vous le demandez, le DDPM de la branche diffusion, exécutés avec ONNX Runtime Web. Une fusion locale puis une fusion robuste donnent le score. Les réseaux (17 Mo chacun) sont téléchargés une fois depuis le dépôt de modèles du mémoire, vérifiés par empreinte SHA-256, puis gardés dans le navigateur. Sur les 10 coupes d'exemple, le score obtenu ici s'écarte de moins de 0,01 de celui du détecteur en Python.</p>
         <p>Ces modèles viennent de l'exécution du carnet publiée avec l'application (120 patients LIDC-IDRI). C'est un outil de recherche, pas un dispositif médical : une alerte invite à vérifier, elle ne prouve rien.</p>
       </details>
     </aside>

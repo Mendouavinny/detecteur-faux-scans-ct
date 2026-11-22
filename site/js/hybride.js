@@ -12,7 +12,8 @@ const CACHE = "detecteur-reseaux-v1";
 const LOT = 8;                                    // patchs par passage (mémoire et réactivité sur téléphone)
 export const TAILLES = { "cnn.onnx": 17, "ddpm.onnx": 17, "gan.onnx": 17 };   // Mo, pour l'affichage
 
-const pause = () => new Promise((r) => setTimeout(r, 0));
+// rend la main au navigateur entre deux lots, sans le ralentissement des minuteries des onglets en arrière-plan
+const pause = () => new Promise((r) => { const c = new MessageChannel(); c.port1.onmessage = () => r(); c.port2.postMessage(0); });
 const sig = (z) => 1 / (1 + Math.exp(-z));
 
 // ------------------------------------------------------------ ONNX Runtime Web (chargé à la demande)
