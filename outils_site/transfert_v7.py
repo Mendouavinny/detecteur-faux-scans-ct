@@ -31,10 +31,19 @@ for n in noms:
     k = (len(s) + MORCEAU - 1) // MORCEAU
     plan.append((n, s, k, hashlib.sha256(b).hexdigest(), len(b)))
 
-total = sum(p[2] for p in plan)
+# reprise après une coupure : morceaux déjà reçus par la page (fichier optionnel du dépôt)
+deja = {}
+f_reprise = os.path.join(os.path.dirname(os.path.abspath(__file__)), "transfert_v7_reprise.json")
+if os.path.exists(f_reprise):
+    with open(f_reprise) as f:
+        deja = json.load(f)
+manque = lambda n, i: i not in set(deja.get(n, []))
+total = sum(sum(manque(p[0], i) for i in range(p[2])) for p in plan)
 j = 0
 for n, s, k, sha, taille in plan:
     for i in range(k):
+        if not manque(n, i):
+            continue
         j += 1
         meta = json.dumps({"type": "morceau-v7", "nom": n, "i": i, "k": k, "sha": sha, "taille": taille})
         script = (
