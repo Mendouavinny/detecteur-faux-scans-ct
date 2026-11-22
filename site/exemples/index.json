@@ -12,8 +12,11 @@
   ],
   "fabricant": "GE MEDICAL SYSTEMS",
   "noyau": "STANDARD",
-  "score_hybride_python": 0.038,
-  "score_forensique": 0.018
+  "score_forensique": 0.0129,
+  "python": {
+   "bruit_cnn": 0.0002,
+   "trois_branches": 0.0005
+  }
  },
  {
   "fichier": "LIDC-IDRI-0085_coupe086.dcm",
@@ -22,8 +25,11 @@
   "nodules": [],
   "fabricant": "GE MEDICAL SYSTEMS",
   "noyau": "STANDARD",
-  "score_hybride_python": 0.047,
-  "score_forensique": 0.05
+  "score_forensique": 0.0657,
+  "python": {
+   "bruit_cnn": 0.0045,
+   "trois_branches": 0.0432
+  }
  },
  {
   "fichier": "LIDC-IDRI-0167_coupe053.dcm",
@@ -32,8 +38,11 @@
   "nodules": [],
   "fabricant": "GE MEDICAL SYSTEMS",
   "noyau": "STANDARD",
-  "score_hybride_python": 0.04,
-  "score_forensique": 0.065
+  "score_forensique": 0.0271,
+  "python": {
+   "bruit_cnn": 0.0044,
+   "trois_branches": 0.0011
+  }
  },
  {
   "fichier": "LIDC-IDRI-0340_coupe035.dcm",
@@ -42,8 +51,11 @@
   "nodules": [],
   "fabricant": "GE MEDICAL SYSTEMS",
   "noyau": "STANDARD",
-  "score_hybride_python": 0.551,
-  "score_forensique": 0.225
+  "score_forensique": 0.4205,
+  "python": {
+   "bruit_cnn": 0.001,
+   "trois_branches": 0.0022
+  }
  },
  {
   "fichier": "LIDC-IDRI-0340_coupe060.dcm",
@@ -58,8 +70,11 @@
   ],
   "fabricant": "GE MEDICAL SYSTEMS",
   "noyau": "STANDARD",
-  "score_hybride_python": 0.533,
-  "score_forensique": 0.236
+  "score_forensique": 0.5242,
+  "python": {
+   "bruit_cnn": 0.0177,
+   "trois_branches": 0.0049
+  }
  },
  {
   "fichier": "LIDC-IDRI-0345_coupe136.dcm",
@@ -68,8 +83,11 @@
   "nodules": [],
   "fabricant": "SIEMENS",
   "noyau": "B45f",
-  "score_hybride_python": 0.782,
-  "score_forensique": 0.74
+  "score_forensique": 0.7833,
+  "python": {
+   "bruit_cnn": 0.1718,
+   "trois_branches": 0.054
+  }
  },
  {
   "fichier": "LIDC-IDRI-0184_coupe072.dcm",
@@ -78,8 +96,11 @@
   "nodules": [],
   "fabricant": "GE MEDICAL SYSTEMS",
   "noyau": "LUNG",
-  "score_hybride_python": 0.375,
-  "score_forensique": 0.865
+  "score_forensique": 0.4566,
+  "python": {
+   "bruit_cnn": 0.1739,
+   "trois_branches": 0.1484
+  }
  },
  {
   "fichier": "LIDC-IDRI-0117_coupe057.dcm",
@@ -88,8 +109,11 @@
   "nodules": [],
   "fabricant": "TOSHIBA",
   "noyau": "FC01",
-  "score_hybride_python": 0.814,
-  "score_forensique": 0.908
+  "score_forensique": 0.3144,
+  "python": {
+   "bruit_cnn": 0.9249,
+   "trois_branches": 0.8095
+  }
  },
  {
   "fichier": "LIDC-IDRI-0126_coupe097.dcm",
@@ -104,8 +128,11 @@
   ],
   "fabricant": "GE MEDICAL SYSTEMS",
   "noyau": "STANDARD",
-  "score_hybride_python": 0.879,
-  "score_forensique": 0.982
+  "score_forensique": 0.9783,
+  "python": {
+   "bruit_cnn": 0.0821,
+   "trois_branches": 0.1397
+  }
  },
  {
   "fichier": "LIDC-IDRI-0126_coupe044.dcm",
@@ -114,7 +141,10 @@
   "nodules": [],
   "fabricant": "GE MEDICAL SYSTEMS",
   "noyau": "STANDARD",
-  "score_hybride_python": 0.873,
-  "score_forensique": 0.99
+  "score_forensique": 0.9724,
+  "python": {
+   "bruit_cnn": 0.4073,
+   "trois_branches": 0.2136
+  }
  }
 ]

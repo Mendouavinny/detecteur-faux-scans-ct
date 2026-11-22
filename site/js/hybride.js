@@ -1,14 +1,15 @@
-// Détecteur hybride complet dans le navigateur : branche CNN, branche diffusion, fusion locale et fusion robuste.
-// Reprise de detecteur.py (Detecteur.branch_outputs, fused_local, branch_vector, fusion). Les réseaux ONNX sont ceux
-// de l'application Python ; ils viennent du dépôt Hugging Face du mémoire (morceaux de 4 Mo, empreinte SHA-256
-// vérifiée), puis restent dans le cache du navigateur. Le calcul se fait avec ONNX Runtime Web (WebAssembly).
+// Détecteur hybride complet dans le navigateur, avec les modèles de l'exécution finale du mémoire (v7, 300 patients) :
+// branche CNN, branche diffusion (facultative), fusion locale, puis méta-classifieur sur les 40 descripteurs de la coupe
+// et les agrégats des patchs (comme le carnet, cellule v5 et m3d_v7.py). Les réseaux ONNX sont servis par ce site
+// (dossier modele/v7), gardés dans le cache du navigateur et exécutés avec ONNX Runtime Web (WebAssembly).
 
-import { P } from "./forensique.js";
+import { P, hgbProba } from "./forensique.js";
+import { descripteursCoupe, agg } from "./globaux.js";
 
-const DEPOT = "https://huggingface.co/MENDOUA/detecteur-faux-scans-ct-modeles/resolve/main/";
+const BASE = new URL("../modele/v7/", import.meta.url).href;
 const ORT_VERSION = "1.20.1";
 const ORT_CDN = `https://cdn.jsdelivr.net/npm/onnxruntime-web@${ORT_VERSION}/dist/`;
-const CACHE = "detecteur-reseaux-v1";
+const CACHE = "detecteur-reseaux-v7";
 const LOT = 8;                                    // patchs par passage (mémoire et réactivité sur téléphone)
 export const TAILLES = { "cnn.onnx": 17, "ddpm.onnx": 17, "gan.onnx": 17 };   // Mo, pour l'affichage
 
@@ -39,56 +40,42 @@ function chargerOrt() {
   return ortPromesse;
 }
 
-// ------------------------------------------------------------ réseaux : téléchargement, vérification, cache
-let manifeste = null;
-async function lireManifeste() {
-  if (manifeste) return manifeste;
-  const c = await caches.open(CACHE).catch(() => null);
-  const url = DEPOT + "morceaux.json";
-  let r = c && (await c.match(url));
-  if (!r) {
-    r = await fetch(url);
-    if (!r.ok) throw new Error("Le dépôt des modèles est injoignable (" + r.status + ").");
-    if (c) await c.put(url, r.clone());
-  }
-  return (manifeste = await r.json());
-}
-
-async function sha256(buf) {
-  const h = await crypto.subtle.digest("SHA-256", buf);
-  return Array.from(new Uint8Array(h), (b) => b.toString(16).padStart(2, "0")).join("");
-}
-
+// ------------------------------------------------------------ réseaux : téléchargement, cache
 export async function reseauEnCache(nom) {
-  try { const c = await caches.open(CACHE); return !!(await c.match("reseau/" + nom)); } catch { return false; }
+  try { const c = await caches.open(CACHE); return !!(await c.match(BASE + nom)); } catch { return false; }
 }
 
 async function octetsReseau(nom, progres) {
   const c = await caches.open(CACHE).catch(() => null);
-  const cle = "reseau/" + nom;
-  const deja = c && (await c.match(cle));
+  const deja = c && (await c.match(BASE + nom));
   if (deja) return new Uint8Array(await deja.arrayBuffer());
-  const m = (await lireManifeste())[nom];
-  if (!m) throw new Error("Réseau absent du dépôt : " + nom);
-  const parts = [];
+  let r;
+  for (let essai = 0; essai < 3 && !(r && r.ok); essai++) {
+    try { r = await fetch(BASE + nom); } catch { r = null; }
+    if (!(r && r.ok)) await new Promise((ok) => setTimeout(ok, 1500));
+  }
+  if (!r || !r.ok) throw new Error("Téléchargement impossible (" + nom + "). Vérifiez la connexion et relancez.");
+  const total = +r.headers.get("Content-Length") || TAILLES[nom] * 1e6, lecteur = r.body.getReader(), parts = [];
   let recu = 0;
-  for (let i = 0; i < m.morceaux.length; i++) {
-    let r;
-    for (let essai = 0; essai < 3; essai++) {
-      try { r = await fetch(DEPOT + m.morceaux[i]); if (r.ok) break; } catch (e) { r = null; }
-      await new Promise((ok) => setTimeout(ok, 1500));
-    }
-    if (!r || !r.ok) throw new Error("Téléchargement interrompu (" + nom + "). Vérifiez la connexion et relancez.");
-    const b = new Uint8Array(await r.arrayBuffer());
-    parts.push(b); recu += b.length;
-    progres?.(i + 1, m.morceaux.length);
+  for (;;) {
+    const { done, value } = await lecteur.read();
+    if (done) break;
+    parts.push(value); recu += value.length; progres?.(Math.min(recu, total), total);
   }
   const tout = new Uint8Array(recu);
   let o = 0;
   for (const p of parts) { tout.set(p, o); o += p.length; }
-  if ((await sha256(tout)) !== m.sha256) throw new Error("Empreinte SHA-256 incorrecte pour " + nom + " : fichier refusé.");
-  if (c) await c.put(cle, new Response(tout, { headers: { "Content-Type": "application/octet-stream" } })).catch(() => {});
+  if (c) await c.put(BASE + nom, new Response(tout, { headers: { "Content-Type": "application/octet-stream" } })).catch(() => {});
   return tout;
+}
+
+/** Paramètres de l'exécution v7 : arbres des classifieurs et fusions (fichiers JSON du site). */
+let config = null;
+export async function modelesV7() {
+  if (config) return config;
+  const lire = (n) => fetch(BASE + n).then((r) => { if (!r.ok) throw new Error("Modèle introuvable : " + n); return r.json(); });
+  const [forensique, meta, meta2, fusion] = await Promise.all(["hgb_forensique.json", "hgb_meta.json", "hgb_meta2.json", "fusion.json"].map(lire));
+  return (config = { ...fusion, forensique, meta, meta2 });      // fusion.json décrit aussi meta/meta2 : les arbres passent après
 }
 
 const sessions = {};
@@ -180,26 +167,30 @@ function mediane(a) {
 const top3 = (p) => { const s = Array.from(p).sort((a, b) => b - a).slice(0, 3); return s.length ? s.reduce((a, b) => a + b, 0) / s.length : 0; };
 
 /**
- * Analyse complète : reprend l'analyse forensique déjà faite (res), ajoute CNN et diffusion, puis les deux fusions.
- * avecDiffusion = false : la branche diffusion n'est pas calculée (s = 0). Son poids est presque nul
- * (−0,011 dans la fusion locale, 0 dans la fusion robuste) ; l'interface l'indique.
+ * Analyse complète (exécution v7). res : analyse forensique de la même coupe (patchs, probabilités, résidus).
+ * Sans diffusion : fusion locale « bruit + CNN », puis méta-classifieur à 52 entrées (AUC 0,879 dans le mémoire).
+ * Avec diffusion : fusion locale à 4 entrées, puis méta-classifieur à 60 entrées (trois branches, AUC 0,870).
  */
-export async function analyseComplete(hu, w, h, res, cfg, { avecDiffusion = true, etape = () => {} } = {}) {
+export async function analyseComplete(hu, w, h, res, cfg, { avecDiffusion = false, etape = () => {} } = {}) {
   const t0 = performance.now(), coords = res.coords;
+  const g = descripteursCoupe(hu, h, w, res.lung, res.R, res.dup);
   etape("cnn", 0, coords.length);
   const { p: pCnn, seg } = await brancheCNN(hu, w, coords, (a, b) => etape("cnn", a, b));
-  let sDiff = new Array(coords.length).fill(0);
+  let sz = null, pLoc, entree, meta;
   if (avecDiffusion) {
     etape("diffusion", 0, coords.length * cfg.ddpm.tirages);
-    sDiff = await brancheDiffusion(hu, w, coords, cfg.ddpm, (a, b) => etape("diffusion", a, b));
+    sz = await brancheDiffusion(hu, w, coords, cfg.ddpm, (a, b) => etape("diffusion", a, b));
+    const L = cfg.local, az = sz.map(Math.abs);
+    pLoc = res.p.map((pf, i) => sig(L.coef[0] * pf + L.coef[1] * pCnn[i] + L.coef[2] * sz[i] + L.coef[3] * az[i] + L.intercept));
+    entree = [...g, ...agg(pLoc), ...agg(res.p), ...agg(pCnn), ...agg(sz), ...agg(az)];
+    meta = cfg.meta;
+  } else {
+    const L = cfg.loc2;
+    pLoc = res.p.map((pf, i) => sig(L.coef[0] * pf + L.coef[1] * pCnn[i] + L.intercept));
+    entree = [...g, ...agg(pLoc), ...agg(res.p), ...agg(pCnn)];
+    meta = cfg.meta2;
   }
-  const L = cfg.local, pLoc = res.p.map((pf, i) => sig(L.coef[0] * pf + L.coef[1] * pCnn[i] + L.coef[2] * sDiff[i] + L.intercept));
-  const v = [top3(res.p), top3(pCnn), top3(sDiff), top3(pLoc)];
-  const F = cfg.fusion;
-  let z = F.t[F.t.length - 1];
-  F.cols.forEach((c, k) => { z += F.t[k] * ((v[c] - F.mu[k]) / F.sd[k]); });
-  const score = sig(z);
-  // cartes : fusion locale et segmentation du CNN (moyenne des patchs qui se recouvrent)
+  const score = hgbProba(meta, entree.map((v) => (Number.isFinite(v) ? v : 0)));
   const carteFusion = new Float32Array(w * h), carteCnn = new Float32Array(w * h), cnt = new Float32Array(w * h);
   coords.forEach(([y, x], k) => {
     for (let a = 0; a < P; a++) for (let b = 0; b < P; b++) {
@@ -209,8 +200,8 @@ export async function analyseComplete(hu, w, h, res, cfg, { avecDiffusion = true
   });
   for (let q = 0; q < w * h; q++) if (cnt[q]) { carteFusion[q] /= cnt[q]; carteCnn[q] /= cnt[q]; }
   return {
-    score, branches: { forensique: v[0], cnn: v[1], diffusion: v[2], locale: v[3] }, pCnn, pLoc, sDiff,
-    carteFusion, carteCnn, avecDiffusion, duree: performance.now() - t0,
+    score, branches: { forensique: top3(res.p), cnn: top3(pCnn), diffusion: sz ? top3(sz.map(Math.abs)) : NaN, locale: top3(pLoc) },
+    pCnn, pLoc, sz, g, entree, carteFusion, carteCnn, avecDiffusion, duree: performance.now() - t0,
   };
 }
 

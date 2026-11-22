@@ -156,7 +156,7 @@ const verdictDe = (s) => (s > etat.tau2 ? ["Alerte", "alerte"] : s > etat.tau1 ?
 function afficherVerdict() {
   const a = etat.res, mot = $("#verdict-mot"), comp = etat.complet;
   $("#verdict-etiquette").textContent = comp ? "Verdict du détecteur complet" : "Verdict de la branche du bruit";
-  $("#score-def").textContent = comp ? "score de la fusion robuste (0 : authentique, 1 : falsifiée)" : "score de la coupe (moyenne des 3 patchs les plus suspects)";
+  $("#score-def").textContent = comp ? "probabilité de falsification donnée par le méta-classifieur (0 : authentique, 1 : falsifiée)" : "score de la coupe (moyenne des 3 patchs les plus suspects)";
   if (!a || !a.ok) {
     mot.textContent = "Non analysable"; mot.className = "verdict-mot";
     $("#score").textContent = "—"; $("#m-patchs").textContent = "0"; $("#m-copie").textContent = "—";
@@ -177,7 +177,7 @@ function afficherVerdict() {
     br.innerHTML = [
       ["Branche du bruit", comp.branches.forensique, "probabilité, 3 patchs les plus suspects"],
       ["Branche CNN", comp.branches.cnn, "probabilité, 3 patchs les plus suspects"],
-      ["Branche diffusion", comp.avecDiffusion ? comp.branches.diffusion : NaN, comp.avecDiffusion ? "écart robuste de l'erreur de reconstruction" : "non calculée"],
+      ["Branche diffusion", comp.avecDiffusion ? comp.branches.diffusion : NaN, comp.avecDiffusion ? "|écart robuste| de l'erreur de reconstruction" : "non calculée"],
       ["Fusion locale", comp.branches.locale, "probabilité, 3 patchs les plus suspects"],
     ].map(([n, v, t]) => `<div><dt>${n}<small>${t}</small></dt><dd>${fr(v)}</dd></div>`).join("");
   } else br.hidden = true;
@@ -188,9 +188,10 @@ function afficherVerdict() {
     cp.innerHTML = `Coupe d'origine : <b>${fr(ref)}</b> (${t0.toLowerCase()}).<br>Après ${ATTAQUES[etat.attaque].court} : <b>${fr(score)}</b> (${txt.toLowerCase()}).` +
       (score <= etat.tau1 ? "<br>Cette falsification passe sous le seuil" + (comp ? "." : " de la branche du bruit seule : essayez le détecteur complet, ou regardez la couche « Niveau du bruit ».") : "");
     av.hidden = false; av.style.left = (ref * 100).toFixed(1) + "%";
-  } else if (etat.exemple && etat.attaque === "aucune" && comp && etat.exemple.score_hybride_python !== undefined) {
+  } else if (etat.exemple && etat.attaque === "aucune" && comp && etat.exemple.python) {
+    const ref = comp.avecDiffusion ? etat.exemple.python.trois_branches : etat.exemple.python.bruit_cnn;
     cp.hidden = false;
-    cp.innerHTML = `Score du même détecteur en Python pour cette coupe : <b>${fr(etat.exemple.score_hybride_python)}</b>.`;
+    cp.innerHTML = `Score du même détecteur en Python pour cette coupe : <b>${fr(ref)}</b>` + (comp.avecDiffusion ? " (la diffusion tire un autre bruit aléatoire : petits écarts possibles)." : ".");
     av.hidden = true;
   } else { cp.hidden = true; av.hidden = true; }
 }
@@ -211,14 +212,15 @@ async function lancerComplet(jeton) {
   for (const nom of besoin) {
     if (!(await M.reseauEnCache(nom))) {
       progression(`Téléchargement du réseau ${nom.replace(".onnx", "").toUpperCase()} (${M.TAILLES[nom]} Mo, une seule fois)…`, 0);
-      await M.session(nom, (i, n) => progression(`Téléchargement du réseau ${nom.replace(".onnx", "").toUpperCase()} (${M.TAILLES[nom]} Mo, une seule fois)…`, i / n));
+      await M.session(nom, (i, n) => progression(`Téléchargement du réseau ${nom.replace(".onnx", "").toUpperCase()} (${M.TAILLES[nom]} Mo, une seule fois)…`, n ? i / n : undefined));
     } else {
       progression("Chargement des réseaux…");
       await M.session(nom);
     }
     if (jeton !== etat.jeton) return null;
   }
-  const comp = await M.analyseComplete(etat.huVu, w, h, res, etat.cfg, {
+  if (!etat.cfgV7) { progression("Chargement des classifieurs…"); etat.cfgV7 = await M.modelesV7(); }
+  const comp = await M.analyseComplete(etat.huVu, w, h, res, etat.cfgV7, {
     avecDiffusion: etat.avecDiffusion,
     etape: (b, i, n) => { if (jeton === etat.jeton) progression(b === "cnn" ? `Branche CNN : ${i} / ${n} patchs` : `Branche diffusion : ${i} / ${n} passages`, n ? i / n : 0); },
   });
@@ -229,7 +231,7 @@ async function ganRemplir(y, x, cond) {
   const M = await hybride();
   if (!(await M.reseauEnCache("gan.onnx"))) progression("Téléchargement du générateur GAN (17 Mo, une seule fois)…", 0);
   else progression("Chargement du générateur GAN…");
-  return M.ganRemplir(etat.hu, etat.w, y, x, cond, etat.cfg, (i, n) => progression("Téléchargement du générateur GAN (17 Mo, une seule fois)…", i / n));
+  return M.ganRemplir(etat.hu, etat.w, y, x, cond, etat.cfgV7 || (etat.cfgV7 = await M.modelesV7()), (i, n) => progression("Téléchargement du générateur GAN (17 Mo, une seule fois)…", i / n));
 }
 
 function cibleNodule() {
@@ -302,7 +304,8 @@ async function calculer() {
 async function charger(buf, nom, meta = null) {
   let d;
   try { d = parseDicom(buf); } catch (e) { montrerErreur(e.message); return; }
-  Object.assign(etat, { hu: d.hu, w: d.cols, h: d.rows, nom, meta: d, exemple: meta, resOrig: null, cible: null, compOrig: undefined });
+  const hu = d.hu.map((v) => (v < -1024 ? -1024 : v > 3071 ? 3071 : v));   // lecture écrêtée de l'exécution v7
+  Object.assign(etat, { hu, w: d.cols, h: d.rows, nom, meta: d, exemple: meta, resOrig: null, cible: null, compOrig: undefined });
   const hash = await crypto.subtle.digest("SHA-256", buf).catch(() => null);
   const hex = hash ? Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, "0")).join("") : "";
   etat.sha = hex;
@@ -486,8 +489,8 @@ function installation() {
   installation();
   try {
     const [model, cfg, exemples] = await Promise.all([
-      fetch("modele/hgb_forensique.json").then((r) => r.json()),
-      fetch("modele/fusion.json").then((r) => r.json()),
+      fetch("modele/v7/hgb_forensique.json").then((r) => r.json()),
+      fetch("modele/v7/fusion.json").then((r) => r.json()),
       fetch("exemples/index.json").then((r) => r.json()),
     ]);
     await accueil();

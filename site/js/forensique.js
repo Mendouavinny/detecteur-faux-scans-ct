@@ -126,7 +126,7 @@ function dilate(m, h, w) {           // élément structurant en croix, bord = 0
   return o;
 }
 
-function erode(m, h, w) {            // bord = 0 (comme binary_erosion de SciPy)
+export function erode(m, h, w) {            // bord = 0 (comme binary_erosion de SciPy)
   const o = new Uint8Array(h * w);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const p = y * w + x;
@@ -210,8 +210,8 @@ export function residuals(hu, h, w) {
 // les arbres du classifieur prennent les mêmes décisions qu'en Python.
 const f32 = Math.fround;
 // NumPy 2 (NEP 50) convertit les constantes Python en float32 avant l'opération
-const C_MAD = f32(1.4826), E6 = f32(1e-6), E9 = f32(1e-9);
-function pw32(a, off, n) {
+export const C_MAD = f32(1.4826), E6 = f32(1e-6), E9 = f32(1e-9);
+export function pw32(a, off, n) {
   if (n < 8) { let r = 0; for (let i = 0; i < n; i++) r = f32(r + a[off + i]); return r; }
   if (n <= 128) {
     const r = new Float64Array(8);
@@ -225,24 +225,24 @@ function pw32(a, off, n) {
   let n2 = Math.floor(n / 2); n2 -= n2 % 8;
   return f32(pw32(a, off, n2) + pw32(a, off + n2, n - n2));
 }
-const mean = (a) => f32(pw32(a, 0, a.length) / a.length);
-function std(a) {
+export const mean = (a) => f32(pw32(a, 0, a.length) / a.length);
+export function std(a) {
   const m = mean(a), x = new Float64Array(a.length);
   for (let i = 0; i < a.length; i++) { const d = f32(a[i] - m); x[i] = f32(d * d); }
   return f32(Math.sqrt(mean(x)));
 }
-function kurtosis(a) {
+export function kurtosis(a) {
   const m = mean(a), x2 = new Float64Array(a.length), x4 = new Float64Array(a.length);
   for (let i = 0; i < a.length; i++) { const d = f32(a[i] - m); x2[i] = f32(d * d); x4[i] = f32(d ** 4); }
   const m2 = mean(x2), m4 = mean(x4);
   return m2 === 0 ? NaN : f32(f32(m4 / f32(m2 * m2)) - 3);
 }
-function median(a) {
+export function median(a) {
   const s = Float64Array.from(a).sort(), n = s.length;
   return n % 2 ? s[(n - 1) / 2] : f32(f32(s[n / 2 - 1] + s[n / 2]) / 2);
 }
 
-function ac1(r, n) {                         // r : patch n × n (float32)
+export function ac1(r, n) {                         // r : patch n × n (float32)
   const m = mean(r), a = new Float64Array(n * n), sq = new Float64Array(n * n);
   for (let i = 0; i < n * n; i++) { a[i] = f32(r[i] - m); sq[i] = f32(a[i] * a[i]); }
   const d = f32(mean(sq) + E6);
@@ -378,7 +378,7 @@ export function gridCoords(lung, h, w) {
   return out;
 }
 
-function crop(a, w, y, x, n) {
+export function crop(a, w, y, x, n) {
   const o = new Float64Array(n * n);
   for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) o[i * n + j] = a[(y + i) * w + x + j];
   return o;

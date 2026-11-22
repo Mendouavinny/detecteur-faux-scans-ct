@@ -1,4 +1,4 @@
-﻿# Détection de faux scans CT par l'analyse du bruit
+# Détection de faux scans CT par l'analyse du bruit
 
 Mémoire de Master 2 en science des données et intelligence artificielle de **Vinny Jordan Mendoua** (École nationale supérieure polytechnique de Douala) : *Détection et localisation de falsifications dans les coupes de scanner thoracique par analyse du bruit et apprentissage profond.*
 
@@ -24,7 +24,7 @@ On peut ajouter ou effacer une tumeur dans une coupe de scanner sans qu'un radio
 | `features.py` | Descripteurs forensiques du bruit |
 | `modeles/` | Classifieurs et fusion entraînés, résultats de l'exécution |
 | `exemples/` | 10 coupes DICOM authentiques de patients du test, jamais vus à l'entraînement |
-| `outils_site/` | Export du classifieur pour le site et contrôle de parité JavaScript / Python |
+| `outils_site/` | Export des modèles pour le site (`export_kaggle_v7.py`, à lancer dans le carnet Kaggle) et contrôles de parité JavaScript / Python |
 | `preparer_exemples.py`, `verifier_fidelite.py` | Préparation et contrôle des exemples (exigent la base LIDC-IDRI en local) |
 
 ## Le détecteur
@@ -54,21 +54,22 @@ Exécution finale (version 7 du carnet), 300 patients LIDC-IDRI séparés par pa
 - Face à des générateurs inconnus, l'avantage disparaît : 0,76 à 0,79 sur CT-GAN (scanners copiés de nos patients exclus), 0,55 à 0,79 sur M3Dsynth. La branche diffusion n'apporte aucun gain mesurable (−0,009) et la localisation reste faible (Dice 0,089).
 - **Artefact d'écrêtage corrigé.** Dans les premières exécutions, seules les coupes falsifiées étaient écrêtées à −1024 HU. Cet indice trivial donnait à lui seul une AUC de 0,829 et gonflait celle de la fusion de 0,125. Toutes les coupes reçoivent désormais le même écrêtage.
 
-**Modèles de l'application.** Les modèles publiés avec l'application (dossier `modeles/` et réseaux sur Hugging Face) viennent d'une exécution antérieure du carnet, à 120 patients, artefact d'écrêtage déjà corrigé. Sur leur propre test interne, la branche forensique atteint une AUC de 0,785 et la fusion robuste 0,772.
+**Modèles des applications.** L'application web utilise les modèles de l'exécution finale (version 7, 300 patients), exportés du carnet Kaggle dans `site/modele/v7/`. Le détecteur complet en Python (dossier `modeles/`, Render) utilise encore ceux d'une exécution antérieure à 120 patients, artefact d'écrêtage déjà corrigé : sur leur propre test interne, la branche forensique y atteint une AUC de 0,785 et la fusion robuste 0,772.
 
 ## L'application web
 
 Le dossier `site/` ne contient que des fichiers statiques.
 
-- `site/js/forensique.js` reprend en JavaScript la branche forensique de `detecteur.py` et `features.py`. Il reproduit l'arithmétique en simple précision de NumPy et évalue les 213 arbres du classifieur exportés dans `site/modele/hgb_forensique.json`. Sur les 10 coupes d'exemple et 40 coupes falsifiées, les probabilités des patchs sont identiques à celles de Python, à 10⁻¹⁶ près.
-- `site/js/hybride.js` exécute le CNN, le DDPM et le générateur GAN avec ONNX Runtime Web, puis la fusion locale et la fusion robuste (`site/modele/fusion.json`). Les réseaux sont lus dans le dépôt Hugging Face, vérifiés par SHA-256 et gardés dans le cache du navigateur. Sur les 10 coupes d'exemple, le score du détecteur complet s'écarte de celui de l'application Python de 0,0007 en moyenne (au plus 0,0025), sans la branche diffusion. Il faut environ 0,5 à 6 s par coupe sur un ordinateur à deux cœurs. La page `site/verification.html` refait cette comparaison.
+- `site/js/forensique.js` reprend en JavaScript la branche forensique de `detecteur.py` et `features.py`. Il reproduit l'arithmétique en simple précision de NumPy et évalue les arbres du classifieur exportés dans `site/modele/v7/hgb_forensique.json`.
+- `site/js/globaux.js` calcule les 40 descripteurs de la coupe (bruit global, anneaux du spectre, blocs, duplication) utilisés par le méta-classifieur.
+- `site/js/hybride.js` exécute le CNN, le DDPM et le générateur GAN avec ONNX Runtime Web (`site/modele/v7/*.onnx`, gardés dans le cache du navigateur), puis la fusion locale et le méta-classifieur de la version 7 : « bruit + CNN » (52 entrées, AUC 0,879) par défaut, « trois branches » (60 entrées, AUC 0,870) avec la diffusion.
+- Parité avec Python sur les 10 coupes d'exemple (`site/modele/v7/reference.json`, calculé dans le carnet) : probabilités forensiques identiques à 10⁻¹⁶ près, descripteurs de la coupe à 4 × 10⁻⁵ près en relatif, scores des deux méta-classifieurs identiques à partir des mêmes sorties de réseaux. `node outils_site/verifier_v7.mjs` refait ce contrôle ; la page `site/verification.html` le refait dans le navigateur avec les réseaux ONNX.
 - `site/sw.js` et `site/manifest.webmanifest` rendent l'application installable et utilisable hors connexion.
 
-Pour contrôler la branche forensique :
+Pour contrôler les modèles v7 :
 
 ```bash
-python outils_site/exporter_modele.py   # réexporte le classifieur et calcule les scores Python de référence
-node outils_site/verifier_parite.mjs    # compare avec le JavaScript
+node outils_site/verifier_v7.mjs        # branche forensique, descripteurs et méta-classifieurs contre reference.json
 ```
 
 Pour l'ouvrir en local : `python -m http.server --directory site`, puis http://localhost:8000.
@@ -89,7 +90,7 @@ python app.py
 
 Ouvrir ensuite http://127.0.0.1:7860. L'application n'écoute que sur ce poste et n'envoie aucune image. Sous Windows, on peut aussi double-cliquer sur `lancer_application.bat`.
 
-Les réseaux pèsent 17 Mo chacun et ne sont pas dans ce dépôt. Ils sont publiés sur Hugging Face : [MENDOUA/detecteur-faux-scans-ct-modeles](https://huggingface.co/MENDOUA/detecteur-faux-scans-ct-modeles).
+Les réseaux du détecteur Python pèsent 17 Mo chacun et ne sont pas dans ce dépôt. Ils sont publiés sur Hugging Face : [MENDOUA/detecteur-faux-scans-ct-modeles](https://huggingface.co/MENDOUA/detecteur-faux-scans-ct-modeles).
 
 - `python telecharger_modeles.py` télécharge dans `modeles/` les versions ONNX (`cnn.onnx`, `ddpm.onnx`, `gan.onnx`). Avec elles, PyTorch n'est pas nécessaire.
 - Avec PyTorch, on peut aussi placer dans `modeles/` les poids d'origine `cnn_best.pt`, `ddpm_attaquant.pt` et `gan_G.pt`. Le moteur se choisit avec `DETECTEUR_MOTEUR=torch` ou `DETECTEUR_MOTEUR=onnx`. Un autre dossier de modèles peut être indiqué avec `DETECTEUR_MODELES`.
