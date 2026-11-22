@@ -3,70 +3,47 @@
 À lancer dans le carnet Kaggle (session interactive) avec :
     %run /tmp/d/outils_site/transfert_v7.py
 
-Le script affiche la taille et l'empreinte SHA-256 de chaque fichier, puis une
-cellule HTML dont le script lit les fichiers par le serveur Jupyter de la session
-et les transmet à la page Kaggle qui l'héberge (window.top.postMessage).
-Rien n'est envoyé ailleurs.
+Le serveur Jupyter de Kaggle n'expose pas /files ni /api/contents : les fichiers
+passent donc par les sorties de la cellule, en morceaux base64. Chaque morceau est
+une petite sortie HTML dont le script le transmet à la page Kaggle qui héberge le
+carnet (window.top.postMessage, origine www.kaggle.com). Une seule sortie est
+gardée à la fois (clear_output), le carnet ne grossit pas. Le débit reste sous la
+limite IOPub de Jupyter (1 Mo/s). Rien n'est envoyé ailleurs.
 """
+import base64
 import hashlib
 import json
 import os
+import time
 
-from IPython.display import HTML, display
+from IPython.display import HTML, clear_output, display
 
 D = "/kaggle/working/export_web_v7"
+MORCEAU = 600_000  # caractères base64 par sortie
+PAUSE = 0.85  # secondes entre deux sorties
+
 noms = sorted(n for n in os.listdir(D) if os.path.isfile(os.path.join(D, n)))
-info = {}
+plan = []
 for n in noms:
     with open(os.path.join(D, n), "rb") as f:
         b = f.read()
-    info[n] = [len(b), hashlib.sha256(b).hexdigest()]
-print(json.dumps(info, indent=1))
+    s = base64.b64encode(b).decode("ascii")
+    k = (len(s) + MORCEAU - 1) // MORCEAU
+    plan.append((n, s, k, hashlib.sha256(b).hexdigest(), len(b)))
 
-JS = r"""
-(async () => {
-  const el = document.getElementById('xfer-etat');
-  const log = (m) => { el.textContent += '\n' + m; };
-  const info = __INFO__;
-  let base = null;
-  try {
-    const c = document.getElementById('jupyter-config-data');
-    if (c) base = JSON.parse(c.textContent).baseUrl;
-  } catch (e) {}
-  if (!base) {
-    const e = performance.getEntriesByType('resource').map(x => x.name).find(n => n.includes('/proxy/'));
-    if (e) { const u = new URL(e); base = u.pathname.slice(0, u.pathname.indexOf('/proxy/') + 7); }
-  }
-  log('origine ' + location.origin + ' | base ' + (base ? 'trouvee' : 'absente') + ' | cadre ' + (window.top !== window));
-  if (!base) return;
-  const b64 = (s) => { const t = atob(s); const u = new Uint8Array(t.length); for (let i = 0; i < t.length; i++) u[i] = t.charCodeAt(i); return u.buffer; };
-  let ok = 0;
-  for (const n of Object.keys(info)) {
-    let buf = null;
-    for (const p of ['files/kaggle/working/export_web_v7/', 'files/export_web_v7/']) {
-      try {
-        const r = await fetch(base + p + n, { credentials: 'include' });
-        if (r.ok) { buf = await r.arrayBuffer(); if (buf.byteLength === info[n][0]) break; log(n + ' taille ' + buf.byteLength); buf = null; }
-        else log(n + ' ' + p + ' -> ' + r.status);
-      } catch (e) { log(n + ' ' + p + ' erreur ' + e); }
-    }
-    if (!buf) {
-      for (const p of ['api/contents/kaggle/working/export_web_v7/', 'api/contents/export_web_v7/']) {
-        try {
-          const r = await fetch(base + p + n + '?content=1&format=base64&type=file', { credentials: 'include' });
-          if (r.ok) { buf = b64((await r.json()).content); break; }
-          else log(n + ' ' + p + ' -> ' + r.status);
-        } catch (e) { log(n + ' ' + p + ' erreur ' + e); }
-      }
-    }
-    if (!buf) continue;
-    const taille = buf.byteLength;
-    window.top.postMessage({ type: 'fichier-v7', nom: n, buf, attendu: info[n] }, 'https://www.kaggle.com', [buf]);
-    ok++;
-    log(n + ' transmis (' + taille + ' octets)');
-  }
-  log('fin ' + ok + '/' + Object.keys(info).length);
-})();
-"""
+total = sum(p[2] for p in plan)
+j = 0
+for n, s, k, sha, taille in plan:
+    for i in range(k):
+        j += 1
+        meta = json.dumps({"type": "morceau-v7", "nom": n, "i": i, "k": k, "sha": sha, "taille": taille})
+        script = (
+            "<script>(function(){var m=" + meta + ";m.data='" + s[i * MORCEAU:(i + 1) * MORCEAU] + "';"
+            "window.top.postMessage(m,'https://www.kaggle.com');})();</script>"
+        )
+        clear_output(wait=True)
+        display(HTML("<pre>transfert " + str(j) + "/" + str(total) + " : " + n + " " + str(i + 1) + "/" + str(k) + "</pre>" + script))
+        time.sleep(PAUSE)
 
-display(HTML('<pre id="xfer-etat">transfert</pre><script>' + JS.replace("__INFO__", json.dumps(info)) + "</script>"))
+clear_output(wait=True)
+display(HTML("<pre>transfert termine : " + str(total) + " morceaux, " + str(len(plan)) + " fichiers</pre>"))
