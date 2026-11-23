@@ -64,7 +64,7 @@ async function accueil() {
   curseur.addEventListener("input", () => poser(+curseur.value));
   // un seul mouvement à l'ouverture : le volet balaie la coupe, comme l'anneau du scanner, et s'arrête sur le nodule
   const fin = Math.round(((cx - 4) / w) * 100);
-  if (reduit) { poser(fin); return; }
+  if (reduit || !("IntersectionObserver" in window)) { poser(fin); return; }
   poser(100);
   let t0; const D = 1800;
   const pas = (t) => {
@@ -73,7 +73,11 @@ async function accueil() {
     poser(100 - (100 - fin) * e);
     if (u < 1) requestAnimationFrame(pas);
   };
-  setTimeout(() => requestAnimationFrame(pas), 350);
+  const vu = new IntersectionObserver((e) => {   // le volet balaie la coupe quand on arrive sur la figure
+    if (!e[0].isIntersecting) return;
+    vu.disconnect(); setTimeout(() => requestAnimationFrame(pas), 250);
+  }, { threshold: 0.45 });
+  vu.observe(fig);
 }
 
 // ------------------------------------------------------------ laboratoire
@@ -157,15 +161,16 @@ function afficherVerdict() {
   const a = etat.res, mot = $("#verdict-mot"), comp = etat.complet;
   $("#verdict-etiquette").textContent = comp ? "Verdict du détecteur complet" : "Verdict de la branche du bruit";
   $("#score-def").textContent = comp ? "probabilité de falsification donnée par le méta-classifieur (0 : authentique, 1 : falsifiée)" : "score de la coupe (moyenne des 3 patchs les plus suspects)";
+  const carte = $(".verdict-carte");
   if (!a || !a.ok) {
-    mot.textContent = "Non analysable"; mot.className = "verdict-mot";
+    mot.textContent = "Non analysable"; mot.className = "verdict-mot"; carte.dataset.etat = "";
     $("#score").textContent = "—"; $("#m-patchs").textContent = "0"; $("#m-copie").textContent = "—";
     $("#jauge-valeur").style.left = "0%"; $("#comparaison").hidden = true; $("#branches").hidden = true;
     if (a) $("#aide-film").textContent = a.message + " Il faut une coupe thoracique où les poumons sont visibles.";
     return;
   }
   const score = comp ? comp.score : a.score, [txt, cl] = verdictDe(score);
-  mot.textContent = txt; mot.className = "verdict-mot " + cl;
+  mot.textContent = txt; mot.className = "verdict-mot " + cl; carte.dataset.etat = cl;
   $("#score").textContent = fr(score);
   $("#jauge-valeur").style.left = (score * 100).toFixed(1) + "%";
   $("#m-patchs").textContent = a.coords.length;
@@ -306,6 +311,12 @@ async function charger(buf, nom, meta = null) {
   try { d = parseDicom(buf); } catch (e) { montrerErreur(e.message); return; }
   const hu = d.hu.map((v) => (v < -1024 ? -1024 : v > 3071 ? 3071 : v));   // lecture écrêtée de l'exécution v7
   Object.assign(etat, { hu, w: d.cols, h: d.rows, nom, meta: d, exemple: meta, resOrig: null, cible: null, compOrig: undefined });
+  const effacer = document.querySelector("input[name=attaque][value=suppression]"), avecNodule = !!cibleNodule();
+  effacer.disabled = !avecNodule;
+  effacer.parentElement.title = avecNodule ? "" : "Choisissez une coupe « avec nodule » pour essayer l'effacement";
+  if (!avecNodule && etat.attaque === "suppression") {
+    etat.attaque = "aucune"; document.querySelector("input[name=attaque][value=aucune]").checked = true;
+  }
   const hash = await crypto.subtle.digest("SHA-256", buf).catch(() => null);
   const hex = hash ? Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, "0")).join("") : "";
   etat.sha = hex;
@@ -318,7 +329,7 @@ async function charger(buf, nom, meta = null) {
 }
 
 function montrerErreur(msg) {
-  $("#verdict-mot").textContent = "Fichier refusé"; $("#verdict-mot").className = "verdict-mot";
+  $("#verdict-mot").textContent = "Fichier refusé"; $("#verdict-mot").className = "verdict-mot"; $(".verdict-carte").dataset.etat = "";
   $("#aide-film").textContent = msg;
 }
 
@@ -402,10 +413,11 @@ async function laboratoire(model, cfg, exemples) {
   film.addEventListener("dragleave", () => (depot.hidden = true));
   film.addEventListener("drop", (e) => { e.preventDefault(); depot.hidden = true; ouvrirFichier(e.dataTransfer.files[0]); });
 
-  $("#choix-attaque").addEventListener("change", async (e) => {
-    etat.attaque = e.target.value; etat.cible = null;
+  document.querySelectorAll("input[name=attaque]").forEach((r) => r.addEventListener("change", async () => {
+    if (!r.checked) return;
+    etat.attaque = r.value; etat.cible = null;
     await calculer();
-  });
+  }));
   film.addEventListener("click", async (e) => {
     if (etat.attaque === "aucune" || etat.attaque === "suppression" || !etat.resOrig) return;
     const c = $("#labo-canvas").getBoundingClientRect();
@@ -442,7 +454,7 @@ async function laboratoire(model, cfg, exemples) {
     $("#v-tau1").textContent = fr(etat.tau1, 2); $("#v-tau2").textContent = fr(etat.tau2, 2);
     $("#seuil1").style.left = etat.tau1 * 100 + "%"; $("#seuil1").textContent = fr(etat.tau1, 2);
     $("#seuil2").style.left = etat.tau2 * 100 + "%"; $("#seuil2").textContent = fr(etat.tau2, 2);
-    $("#jauge-piste").style.setProperty("--t1", etat.tau1 * 100 + "%"); $("#jauge-piste").style.setProperty("--t2", etat.tau2 * 100 + "%");
+    $(".jauge").style.setProperty("--t1", etat.tau1 * 100 + "%"); $(".jauge").style.setProperty("--t2", etat.tau2 * 100 + "%");
   };
   $("#tau1").value = etat.tau1; $("#tau2").value = etat.tau2; majSeuils();
   $("#tau1").addEventListener("input", (e) => { etat.tau1 = Math.min(+e.target.value, etat.tau2 - 0.01); stock.ecrire("tau1", etat.tau1); majSeuils(); afficherVerdict(); });
@@ -493,8 +505,7 @@ function installation() {
       fetch("modele/v7/fusion.json").then((r) => r.json()),
       fetch("exemples/index.json").then((r) => r.json()),
     ]);
-    await accueil();
-    await laboratoire(model, cfg, exemples);
+    await Promise.all([laboratoire(model, cfg, exemples), accueil()]);
   } catch (e) {
     console.error(e);
     const a = $("#aide-film");

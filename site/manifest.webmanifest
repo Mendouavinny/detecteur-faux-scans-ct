@@ -1,13 +1,13 @@
 {
-  "name": "Faux scans CT : le bruit du scanner trahit l'image falsifiée",
+  "name": "Faux scans CT : ce scanner a-t-il été truqué ?",
   "short_name": "Faux scans CT",
   "description": "Détecter et localiser les falsifications d'une coupe de scanner thoracique par l'analyse du bruit, dans le navigateur.",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#e6ecef",
-  "theme_color": "#e6ecef",
+  "background_color": "#0f2130",
+  "theme_color": "#0f2130",
   "icons": [
     { "src": "img/icone-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "img/icone-512.png", "sizes": "512x512", "type": "image/png" },
