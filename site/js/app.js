@@ -253,6 +253,7 @@ function constats() {
   if (top) L.push(au
     ? `<b>${au} zone${au > 1 ? "s" : ""}</b> sur ${z.length} dépasse${au > 1 ? "nt" : ""} le seuil de vigilance. La plus suspecte (score ${fr(top.v, 2)}) se trouve ${lieu(top.i)}.`
     : `Aucune des ${z.length} zones du poumon ne dépasse le seuil de vigilance ; la plus haute (score ${fr(top.v, 2)}) se trouve ${lieu(top.i)}.`);
+  if (cl !== "conforme" && !au) L.push("Le score élevé vient des mesures d'ensemble de la coupe (bruit global, spectre, blocs), pas d'une zone précise : rien n'est localisé. Vérifiez la coupe auprès de sa source.");
   const sb = statsBruit();
   if (sb) L.push(`Bruit au moins deux fois plus faible que l'habituel de la coupe sur <b>${fr(sb.manque, 1)} %</b> du poumon, au moins deux fois plus fort sur <b>${fr(sb.exces, 1)} %</b>.`);
   L.push(a.dupPx ? `<b>${a.dupPx} pixels</b> sont recopiés à l'identique ailleurs dans la coupe : c'est la signature d'un copier-déplacer.` : "Aucune zone n'est recopiée à l'identique dans la coupe.");
