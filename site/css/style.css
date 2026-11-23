@@ -420,6 +420,48 @@ h4 { font: 600 16px/1.3 var(--titre); margin: 0 0 6px; }
 .pied p { margin: 0 0 8px; line-height: 1.55; }
 .pied b { color: var(--encre); font-weight: 600; }
 
+/* ------------------------------------------------------------ envoi du rapport */
+.envoi { width: min(600px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); padding: 0; border: 0; border-radius: 20px; color: var(--encre); background: #fff; box-shadow: 0 30px 80px -30px rgba(14, 27, 36, .45); overflow: auto; }
+.envoi::backdrop { background: rgba(14, 27, 36, .42); }
+.envoi[open] { animation: envoi-entre .18s ease-out; }
+@keyframes envoi-entre { from { opacity: 0; transform: translateY(10px); } }
+@media (prefers-reduced-motion: reduce) { .envoi[open] { animation: none; } }
+.envoi-corps { display: grid; gap: 18px; padding: 24px 26px 22px; }
+.envoi-tete { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.envoi-tete h2 { margin: 0; font: 600 23px/1.2 var(--titre); letter-spacing: -.01em; }
+.envoi-etat { margin: 6px 0 0; color: var(--gris); font-size: 14.5px; min-height: 1.4em; }
+.envoi-tete form { margin: 0; }
+.envoi-fermer { display: grid; place-items: center; width: 38px; height: 38px; margin: -6px -8px 0 0; border: 0; border-radius: 10px; background: none; color: var(--gris); cursor: pointer; }
+.envoi-fermer:hover { background: var(--carte-2); color: var(--encre); }
+.envoi-fermer svg { width: 20px; height: 20px; }
+.envoi-anonyme { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-radius: 14px; background: var(--carte-2); cursor: pointer; font-weight: 500; font-size: 15px; }
+.envoi-anonyme input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--marine); flex: none; }
+.envoi-anonyme small { display: block; margin-top: 3px; color: var(--gris); font-weight: 400; font-size: 13.5px; line-height: 1.45; }
+.envoi-choix { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.envoi-option { display: grid; justify-items: start; align-content: start; gap: 4px; padding: 16px 15px 15px; text-align: left; border: 1px solid var(--trait); border-radius: 14px; background: #fff; color: var(--encre); font: inherit; cursor: pointer; transition: border-color .15s, background .15s; }
+.envoi-option svg { width: 30px; height: 30px; margin-bottom: 8px; }
+.envoi-option b { font-weight: 600; font-size: 15.5px; }
+.envoi-option small { color: var(--gris); font-size: 13px; line-height: 1.4; }
+.envoi-option:hover:not(:disabled) { border-color: var(--marine); background: var(--carte-2); }
+.envoi-option:disabled { opacity: .5; cursor: progress; }
+.envoi-option.principale { grid-column: 1 / -1; grid-template-columns: auto 1fr; align-items: center; gap: 2px 16px; padding: 16px 18px; background: var(--marine); border-color: var(--marine); color: #fff; }
+.envoi-option.principale svg { grid-row: span 2; margin: 0; }
+.envoi-option.principale small { color: rgba(255, 255, 255, .78); }
+.envoi-option.principale:hover:not(:disabled) { background: #1c3b52; }
+.envoi-note { margin: 0; padding: 13px 16px; border-radius: 12px; background: #fdf4e3; color: #6a4205; font-size: 14.5px; line-height: 1.5; }
+.envoi-note b { font-weight: 600; word-break: break-all; }
+.envoi-bas { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; }
+.envoi-bas p { margin: 0; color: var(--gris); font-size: 13px; line-height: 1.5; max-width: 44ch; }
+.envoi-bas .lien-bouton { padding: 0; font-size: 14px; flex: none; }
+@media (max-width: 560px) {
+  .envoi { width: 100vw; max-width: 100vw; margin: auto 0 0; border-radius: 20px 20px 0 0; max-height: 92dvh; }
+  .envoi-corps { padding: 20px 18px 22px; gap: 14px; }
+  .envoi-choix { grid-template-columns: minmax(0, 1fr); }
+  .envoi-option { grid-template-columns: auto 1fr; align-items: center; gap: 1px 14px; padding: 12px 14px; }
+  .envoi-option svg { grid-row: span 2; margin: 0; width: 28px; height: 28px; }
+  .envoi-bas { flex-direction: column; align-items: flex-start; gap: 10px; }
+}
+
 /* ------------------------------------------------------------ téléphones */
 @media (max-width: 620px) {
   .console { padding: 8px; border-radius: 18px; }

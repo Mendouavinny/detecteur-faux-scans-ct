@@ -1,9 +1,9 @@
 // Application : dépôt de coupes DICOM (une coupe ou une série), analyse, constats en clair, graphiques,
-// rapport PDF, historique chaîné, page « Comprendre ». Tout le calcul se fait dans le navigateur.
+// rapport PDF à télécharger ou à envoyer (WhatsApp, e-mail), historique chaîné, page « Comprendre ». Tout le calcul se fait dans le navigateur.
 import { parseDicom, analyser, lungMask, residuals, carteBruit, P } from "./forensique.js";
 import { falsifier, cibleParDefaut, noduleLisse, ATTAQUES } from "./attaques.js";
 import * as G from "./graphes.js";
-import { imprimerRapport, exporterCSV } from "./rapport.js";
+import { imprimerRapport, exporterCSV, pdfRapport, texteResume } from "./rapport.js";
 
 const $ = (s) => document.querySelector(s);
 const fr = (v, d = 3) => (Number.isFinite(v) ? v.toFixed(d).replace(".", ",").replace("-", "−") : "—");
@@ -657,21 +657,46 @@ function nouvelleAnalyse() {
 }
 
 // ------------------------------------------------------------ rapport et export
-function rapport() {
-  const a = etat.res, comp = etat.complet, d = etat.meta;
-  if (!a || !a.ok || !d) return;
+// Données du rapport. anonyme : sans identifiant patient, date d'examen ni noms de fichiers (les exemples
+// LIDC-IDRI, publics, gardent leur nom). L'empreinte SHA-256 permet au destinataire de retrouver le fichier.
+function donneesRapport(anonyme = false) {
+  const a = etat.res, comp = etat.complet, d = etat.meta || {};
+  if (!a || !a.ok) return null;
   const score = comp ? comp.score : a.score, [txt, cl] = verdictDe(score);
   const g = construireGraphes(360);
-  const S = etat.serie;
-  imprimerRapport({
-    titre: etat.exemple ? `${etat.exemple.patient}, coupe ${etat.exemple.coupe}` : etat.nom,
-    nomFichier: etat.nom, verdict: txt, classe: cl, score: fr(score),
+  const S = etat.serie, ex = etat.exemple, masquer = anonyme && !ex;
+  const coupe = ex ? `${ex.patient}, coupe ${ex.coupe}` : masquer ? (Number.isFinite(d.instance) ? `Coupe n° ${d.instance}` : "Coupe analysée") : etat.nom;
+  const top = zonesSuspectes(1)[0];
+  const seuils = [{ v: etat.tau1, couleur: G.COUL.verifier, nom: "vigilance" }, { v: etat.tau2, couleur: G.COUL.alerte, nom: "alerte" }];
+  let serie = null;
+  if (S) {
+    const compte = { conforme: 0, verifier: 0, alerte: 0, non: 0 }, aRevoir = [];
+    const lignes = S.items.map((x, i) => {
+      const cle = x.ok ? verdictDe(x.score)[1] : "non", num = Number.isFinite(x.instance) ? x.instance : "";
+      compte[cle]++;
+      if (cle === "verifier" || cle === "alerte") aRevoir.push(num !== "" ? `n° ${num}` : `${i + 1}e`);
+      return { ordre: i + 1, coupe: num, nom: masquer ? "" : x.nom, score: x.ok ? fr(x.score) : "—", verdict: x.ok ? verdictDe(x.score)[0] : "non analysable", classe: cle };
+    });
+    serie = {
+      compte, aRevoir, lignes,
+      svg: G.serie({ coupes: S.items.map((x, i) => ({ ok: !!x.ok, score: x.score, couleur: x.ok ? couleurEtat(x.score) : G.COUL.gris, etiquette: Number.isFinite(x.instance) ? String(x.instance) : String(i + 1), info: "" })), largeur: 680, hauteur: 180, seuils, choisie: S.choisie }),
+    };
+  }
+  return {
+    date: new Date(), anonyme: masquer,
+    titre: S ? `Série de ${S.items.length} coupes` : coupe,
+    sousTitre: S ? `Coupe détaillée : ${!masquer ? coupe : Number.isFinite(d.instance) ? `n° ${d.instance}` : `${S.choisie + 1}e de la série`}` : "",
+    nomFichier: masquer ? "analyse" : S ? `serie-${S.items.length}-coupes` : etat.nom,
+    verdict: txt, classe: cl, score: fr(score), scoreBrut: score,
     definition: comp ? "probabilité de falsification donnée par le méta-classifieur (0 : authentique, 1 : falsifiée)" : "moyenne des 3 zones les plus suspectes de l'analyse du bruit",
     tau1: fr(etat.tau1, 2), tau2: fr(etat.tau2, 2),
+    analyse: comp ? (comp.avecDiffusion ? "complète (bruit, réseau de neurones et diffusion)" : "complète (bruit et réseau de neurones)") : "rapide (analyse du bruit seule)",
+    zone: top ? `${lieu(top.i).replace(/^dans le /, "")} (score ${fr(top.v, 2)})` : "",
     simulation: etat.attaque !== "aucune" ? ATTAQUES[etat.attaque].court : "",
+    sha: etat.sha,
     fichier: [
-      ["Fichier", etat.nom], ["Identifiant patient (DICOM)", d.patient], ["Date de l'examen", dateDicom(d.date)], ["Description", d.etude || d.serie],
-      ["Fabricant", d.manufacturer], ["Noyau de reconstruction", d.kernel], ["Numéro de coupe", Number.isFinite(d.instance) ? d.instance : ""],
+      ["Fichier", masquer ? "" : etat.nom], ["Identifiant patient (DICOM)", masquer ? "" : d.patient], ["Date de l'examen", masquer ? "" : dateDicom(d.date)],
+      ["Description", d.etude || d.serie], ["Fabricant", d.manufacturer], ["Noyau de reconstruction", d.kernel], ["Numéro de coupe", Number.isFinite(d.instance) ? d.instance : ""],
       ["Image", `${d.cols} × ${d.rows} pixels`], ["Zones du poumon analysées", a.coords.length],
       ["Analyse", comp ? (comp.avecDiffusion ? "complète : bruit, réseau de neurones et diffusion" : "complète : bruit et réseau de neurones") : "rapide : analyse du bruit"],
       ["Empreinte SHA-256 du fichier", etat.sha],
@@ -682,11 +707,104 @@ function rapport() {
       { titre: "Score des zones du poumon", svg: g.zones }, { titre: "Avis de chaque méthode", svg: g.methodes },
       { titre: "Niveau du bruit dans le poumon", svg: g.bruit }, { titre: "Bruit et score de chaque zone", svg: g.nuage },
     ].filter((x) => x.svg),
-    serie: S ? {
-      svg: G.serie({ coupes: S.items.map((x, i) => ({ ok: !!x.ok, score: x.score, couleur: x.ok ? couleurEtat(x.score) : G.COUL.gris, etiquette: Number.isFinite(x.instance) ? String(x.instance) : String(i + 1), info: "" })), largeur: 680, hauteur: 180, seuils: [{ v: etat.tau1, couleur: G.COUL.verifier, nom: "vigilance" }, { v: etat.tau2, couleur: G.COUL.alerte, nom: "alerte" }], choisie: S.choisie }),
-      lignes: S.items.map((x, i) => ({ ordre: i + 1, nom: x.nom, score: x.ok ? fr(x.score) : "—", verdict: x.ok ? verdictDe(x.score)[0] : "non analysable" })),
-    } : null,
-  });
+    serie,
+  };
+}
+const z2 = (v) => String(v).padStart(2, "0");
+function nomRapport(r) {
+  const d = r.date, t = `${d.getFullYear()}${z2(d.getMonth() + 1)}${z2(d.getDate())}-${z2(d.getHours())}${z2(d.getMinutes())}`;
+  const base = String(r.nomFichier || "analyse").replace(/\.[^.]+$/, "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "analyse";
+  return `rapport-${base}-${t}.pdf`;
+}
+async function preparerPDF(anonyme) {
+  const r = donneesRapport(anonyme);
+  if (!r) throw new Error("aucune coupe analysée");
+  const { blob, pages } = await pdfRapport(r);
+  const nom = nomRapport(r);
+  let fichier = null;
+  try { fichier = new File([blob], nom, { type: "application/pdf" }); } catch { /* très anciens navigateurs */ }
+  return { r, blob, pages, nom, fichier };
+}
+function telecharger(blob, nom) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = nom; a.rel = "noopener";
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+}
+const taille = (o) => (o < 1e6 ? `${Math.max(1, Math.round(o / 1e3))} Ko` : `${fr(o / 1e6, 1)} Mo`);
+
+async function rapportPDF() {
+  const b = $("#rapport-pdf"), t = b.lastChild.textContent;
+  if (!etat.res || !etat.res.ok) return;
+  b.disabled = true; b.lastChild.textContent = "Préparation…";
+  try { const p = await preparerPDF(false); telecharger(p.blob, p.nom); }
+  catch (e) { console.error(e); alert("Le rapport PDF n'a pas pu être préparé : " + e.message); }
+  finally { b.disabled = false; b.lastChild.textContent = t; }
+}
+
+// ------------------------------------------------------------ envoi du rapport (WhatsApp, e-mail, partage)
+const envoi = { jeton: 0, pret: null };
+const lienAppli = () => location.href.split("#")[0].split("?")[0];
+function noteEnvoi(html) { const n = $("#envoi-note"); n.innerHTML = html || ""; n.hidden = !html; }
+async function preparerEnvoi() {
+  const jeton = ++envoi.jeton, boutons = document.querySelectorAll("#envoi .envoi-option, #envoi-imprimer");
+  envoi.pret = null; noteEnvoi("");
+  boutons.forEach((b) => (b.disabled = true));
+  $("#envoi-etat").textContent = "Préparation du rapport PDF…";
+  try {
+    const p = await preparerPDF($("#envoi-anonyme").checked);
+    if (jeton !== envoi.jeton) return;
+    envoi.pret = p;
+    let partage = false;
+    try { partage = !!(p.fichier && navigator.canShare && navigator.canShare({ files: [p.fichier] })); } catch { partage = false; }
+    $("#envoi-partager").hidden = !partage;
+    $("#envoi").classList.toggle("avec-partage", partage);
+    $("#envoi-etat").textContent = `${p.r.verdict}, score ${p.r.score}. Rapport PDF : ${p.pages} page${p.pages > 1 ? "s" : ""}, ${taille(p.blob.size)}.`;
+    boutons.forEach((b) => (b.disabled = false));
+  } catch (e) {
+    if (jeton !== envoi.jeton) return;
+    console.error(e);
+    $("#envoi-etat").textContent = "Le rapport PDF n'a pas pu être préparé : " + e.message;
+  }
+}
+function ouvrirEnvoi() {
+  const dlg = $("#envoi");
+  if (!etat.res || !etat.res.ok) return;
+  if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", "");
+  preparerEnvoi();
+}
+const aJoindre = (p, appli) =>
+  `Le rapport <b>${p.nom}</b> vient d'être téléchargé sur cet appareil. Dans ${appli}, choisissez le destinataire puis joignez ce fichier (trombone) au message.`;
+async function envoyer(canal) {
+  const p = envoi.pret;
+  if (!p) return;
+  if (canal === "partager") {
+    try {
+      await navigator.share({ files: [p.fichier], title: "Rapport d'analyse : " + p.r.titre, text: texteResume(p.r, { lien: lienAppli() }) });
+      noteEnvoi("");
+    } catch (e) {
+      if (e && e.name === "AbortError") return;
+      telecharger(p.blob, p.nom);
+      noteEnvoi(`Le partage n'a pas abouti : le rapport <b>${p.nom}</b> a été téléchargé sur cet appareil. Joignez-le à votre message (trombone).`);
+    }
+  } else if (canal === "whatsapp") {
+    window.open("https://wa.me/?text=" + encodeURIComponent(texteResume(p.r, { whatsapp: true, lien: lienAppli() })), "_blank", "noopener");
+    telecharger(p.blob, p.nom);
+    noteEnvoi(aJoindre(p, "WhatsApp"));
+  } else if (canal === "email") {
+    const sujet = `Rapport d'analyse (${p.r.verdict.toLowerCase()}) : ${p.r.titre}`;
+    const a = document.createElement("a");
+    a.href = `mailto:?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(texteResume(p.r, { lien: lienAppli() }).replace(/\n/g, "\r\n"))}`;
+    document.body.append(a); a.click(); a.remove();
+    telecharger(p.blob, p.nom);
+    noteEnvoi(aJoindre(p, "votre messagerie"));
+  } else if (canal === "telecharger") {
+    telecharger(p.blob, p.nom);
+    noteEnvoi(`Le rapport <b>${p.nom}</b> est dans les téléchargements de cet appareil.`);
+  } else if (canal === "imprimer") {
+    $("#envoi").close();
+    imprimerRapport(p.r);
+  }
 }
 function exporterSerie() {
   const S = etat.serie;
@@ -857,7 +975,13 @@ function installerInterface(exemples) {
   });
 
   // actions du dossier
-  $("#rapport-pdf").addEventListener("click", rapport);
+  $("#rapport-pdf").addEventListener("click", rapportPDF);
+  $("#envoyer").addEventListener("click", ouvrirEnvoi);
+  $("#envoi-anonyme").addEventListener("change", preparerEnvoi);
+  for (const [id, canal] of [["#envoi-partager", "partager"], ["#envoi-whatsapp", "whatsapp"], ["#envoi-email", "email"], ["#envoi-telecharger", "telecharger"], ["#envoi-imprimer", "imprimer"]])
+    $(id).addEventListener("click", () => envoyer(canal));
+  $("#envoi").addEventListener("close", () => { envoi.jeton++; envoi.pret = null; });
+  $("#envoi").addEventListener("click", (e) => { if (e.target === $("#envoi")) $("#envoi").close(); });   // clic hors de la fenêtre
   $("#export-csv").addEventListener("click", exporterSerie);
   $("#nouvelle").addEventListener("click", nouvelleAnalyse);
 

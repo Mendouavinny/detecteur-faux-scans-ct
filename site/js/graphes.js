@@ -22,7 +22,7 @@ function barreH(x, y, l, h, couleur, info) {
   return `<path d="${d}" fill="${couleur}"${info ? ` data-info="${esc(info)}"` : ""}/>`;
 }
 const svg = (l, h, corps, titre) =>
-  `<svg viewBox="0 0 ${l} ${h}" width="${l}" height="${h}" role="img" aria-label="${esc(titre)}" style="max-width:100%;height:auto;font-family:Inter,system-ui,sans-serif">${corps}</svg>`;
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${l} ${h}" width="${l}" height="${h}" role="img" aria-label="${esc(titre)}" style="max-width:100%;height:auto;font-family:Inter,system-ui,sans-serif">${corps}</svg>`;
 const pasJoli = (m) => { const e = 10 ** Math.floor(Math.log10(Math.max(m, 1))); return [1, 2, 5, 10].map((k) => k * e).find((p) => m / p <= 4) || e * 10; };
 
 // ------------------------------------------------------------ histogramme

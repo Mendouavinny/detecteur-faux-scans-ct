@@ -91,7 +91,8 @@
           <label class="mode" title="Bruit + réseau de neurones : plus fiable (17 Mo téléchargés une seule fois)"><input type="radio" name="mode" value="complet"><span>Complète</span></label>
           <label class="option-diffusion" title="Ajoute la branche diffusion : environ une minute par coupe"><input type="checkbox" id="avec-diffusion"><span>+ diffusion</span></label>
         </div>
-        <button class="bouton principal" id="rapport-pdf" type="button"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 2h6l4 4v12H6zM12 2v4h4M8.5 11h5M8.5 14h5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>Rapport PDF</button>
+        <button class="bouton principal" id="envoyer" type="button"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2.5 9.6 17.5 3l-5.2 14-2.9-5.9zM9.4 11.1l8.1-8.1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>Envoyer le rapport</button>
+        <button class="bouton" id="rapport-pdf" type="button"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M6 2h6l4 4v12H6zM12 2v4h4M8.5 11h5M8.5 14h5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>Rapport PDF</button>
         <button class="bouton" id="export-csv" type="button" hidden>Exporter (CSV)</button>
         <button class="bouton" id="nouvelle" type="button">Nouvelle analyse</button>
       </div>
@@ -408,6 +409,41 @@
   </div>
 </footer>
 
+<dialog class="envoi" id="envoi" aria-labelledby="envoi-titre">
+  <div class="envoi-corps">
+    <div class="envoi-tete">
+      <div>
+        <h2 id="envoi-titre">Envoyer le rapport</h2>
+        <p class="envoi-etat" id="envoi-etat" role="status"></p>
+      </div>
+      <form method="dialog"><button class="envoi-fermer" aria-label="Fermer"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></form>
+    </div>
+    <label class="envoi-anonyme"><input type="checkbox" id="envoi-anonyme" checked><span>Masquer les informations du patient<small>Identifiant, date de l'examen et noms de fichiers. L'empreinte SHA-256 reste dans le rapport : elle permet de retrouver le fichier.</small></span></label>
+    <div class="envoi-choix">
+      <button class="envoi-option principale" id="envoi-partager" type="button" hidden>
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4v16M10 10l6-6 6 6M7 15v11h18V15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <b>Envoyer le PDF</b><small>Choisissez WhatsApp, Gmail, Outlook… : le rapport est joint.</small>
+      </button>
+      <button class="envoi-option" id="envoi-whatsapp" type="button">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4a11.5 11.5 0 0 0-9.9 17.4L4.5 27.5l6.3-1.6A11.5 11.5 0 1 0 16 4z" fill="none" stroke="#1c9a55" stroke-width="2" stroke-linejoin="round"/><path d="M11.6 10.8c.3-.7.7-.8 1.1-.8h.8c.3 0 .6.1.8.6l1 2.4c.1.3 0 .6-.2.9l-.7.8c.7 1.4 1.9 2.6 3.4 3.3l.8-.8c.3-.3.6-.3.9-.2l2.3 1.1c.4.2.5.4.5.8 0 1.3-1.2 2.5-2.6 2.5-4.3-.3-8.4-4.2-8.6-8.5 0-.8.3-1.6.5-2.1z" fill="#1c9a55"/></svg>
+        <b>WhatsApp</b><small>Message résumé, puis joindre le PDF</small>
+      </button>
+      <button class="envoi-option" id="envoi-email" type="button">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="7" width="24" height="18" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 9l11 8 11-8" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+        <b>E-mail</b><small>Message résumé, puis joindre le PDF</small>
+      </button>
+      <button class="envoi-option" id="envoi-telecharger" type="button">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 5v15M10 14l6 6 6-6M7 25h18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <b>Télécharger le PDF</b><small>Pour l'archiver ou l'envoyer plus tard</small>
+      </button>
+    </div>
+    <p class="envoi-note" id="envoi-note" role="status" hidden></p>
+    <div class="envoi-bas">
+      <p>L'application n'envoie rien elle-même : le message part de votre WhatsApp ou de votre messagerie, au destinataire que vous choisissez.</p>
+      <button class="lien-bouton" id="envoi-imprimer" type="button">Imprimer</button>
+    </div>
+  </div>
+</dialog>
 <div class="rapport" id="rapport" aria-hidden="true"></div>
 <div class="infobulle" id="infobulle" role="tooltip" hidden></div>
 </body>
