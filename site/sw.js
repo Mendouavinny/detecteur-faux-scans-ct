@@ -2,11 +2,11 @@
 // Pages, scripts et styles : réseau d'abord (les mises à jour arrivent), copie locale en secours.
 // Polices, images, coupes d'exemple, modèle et ONNX Runtime : copie locale d'abord.
 // Les réseaux ONNX sont gardés par l'application elle-même (cache « detecteur-reseaux-v7 »).
-const VERSION = "faux-scans-ct-v7";
+const VERSION = "faux-scans-ct-v8";
 const BASE = [
   "./", "index.html", "css/style.css", "js/app.js", "js/forensique.js", "js/attaques.js", "js/hybride.js", "js/globaux.js", "js/graphes.js", "js/rapport.js",
   "modele/v7/hgb_forensique.json", "modele/v7/fusion.json", "modele/v7/hgb_meta.json", "modele/v7/hgb_meta2.json", "exemples/index.json", "exemples/LIDC-IDRI-0085_coupe086.dcm",
-  "manifest.webmanifest", "img/icone.svg", "img/icone-192.png", "img/logo_ud.png", "img/logo_enspd.png",
+  "manifest.webmanifest", "img/icone.svg", "img/icone-192.png", "img/logo_ud.png", "img/logo_enspd.png", "img/auteur-avatar.jpg", "img/auteur-portrait.jpg",
   "polices/InterDisplay-SemiBold.woff", "polices/InterDisplay-Medium.woff", "polices/Inter-Regular.woff",
   "polices/Inter-Medium.woff", "polices/Inter-SemiBold.woff", "polices/DejaVuSansMono.woff",
 ];
