@@ -93,6 +93,9 @@ export function parseDicom(buf) {
     rows, cols, hu, ts, slope, inter,
     modality: str(0x00080060), patient: str(0x00100020), manufacturer: str(0x00080070),
     kernel: str(0x00181210), kvp: str(0x00180060), thickness: str(0x00180050),
+    instance: parseInt(str(0x00200013) || "", 10), localisation: parseFloat(str(0x00201041) || ""),
+    position: (str(0x00200032) || "").split("\\").map(Number), serie: str(0x0008103e), date: str(0x00080020),
+    uid: str(0x00080018), etude: str(0x00081030),
   };
 }
 
