@@ -2,7 +2,7 @@
 // Pages, scripts et styles : réseau d'abord (les mises à jour arrivent), copie locale en secours.
 // Polices, images, coupes d'exemple, modèle et ONNX Runtime : copie locale d'abord.
 // Les réseaux ONNX sont gardés par l'application elle-même (cache « detecteur-reseaux-v7 »).
-const VERSION = "faux-scans-ct-v5";
+const VERSION = "faux-scans-ct-v6";
 const BASE = [
   "./", "index.html", "css/style.css", "js/app.js", "js/forensique.js", "js/attaques.js", "js/hybride.js", "js/globaux.js",
   "modele/v7/hgb_forensique.json", "modele/v7/fusion.json", "modele/v7/hgb_meta.json", "modele/v7/hgb_meta2.json", "exemples/index.json", "exemples/LIDC-IDRI-0085_coupe086.dcm",
