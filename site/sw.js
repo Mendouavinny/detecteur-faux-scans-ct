@@ -8,7 +8,7 @@ const BASE = [
   "modele/v7/hgb_forensique.json", "modele/v7/fusion.json", "modele/v7/hgb_meta.json", "modele/v7/hgb_meta2.json", "exemples/index.json", "exemples/LIDC-IDRI-0085_coupe086.dcm",
   "manifest.webmanifest", "img/icone.svg", "img/icone-192.png", "img/logo_ud.png", "img/logo_enspd.png",
   "polices/InterDisplay-SemiBold.woff", "polices/InterDisplay-Medium.woff", "polices/Inter-Regular.woff",
-  "polices/Inter-Medium.woff", "polices/Inter-SemiBold.woff", "polices/Lora-Variable.woff", "polices/DejaVuSansMono.woff",
+  "polices/Inter-Medium.woff", "polices/Inter-SemiBold.woff", "polices/DejaVuSansMono.woff",
 ];
 
 self.addEventListener("install", (e) => {
